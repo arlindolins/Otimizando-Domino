@@ -1,6 +1,6 @@
 # app.py
 from flask import Flask, jsonify, render_template
-from domino_v3 import simular_rodada
+from motor_de_jogo import simular_rodada
 
 app = Flask(__name__)
 

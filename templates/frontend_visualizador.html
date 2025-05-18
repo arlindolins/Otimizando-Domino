@@ -52,8 +52,6 @@ function mostrar() {
    Lado: ${estado.lado || '-'} |
    Tipo de Batida: ${estado.tipo_batida || '-'}`;
 
-`;
-
   document.getElementById("tabuleiro").innerHTML = estado.tabuleiro.map(formata).join(' ');
 
   let htmlMaos = '';

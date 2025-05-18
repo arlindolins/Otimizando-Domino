@@ -162,6 +162,8 @@ def simular_rodada():
         ordem_jogada += 1
         jogador = proximo_jogador(jogador)
 
+    print(estados)
+    
     return {
         "estados": estados,
         "final": {
@@ -171,3 +173,7 @@ def simular_rodada():
             "pontuacao_rodada": pontuacao_rodada
         }
     }
+
+
+    
+

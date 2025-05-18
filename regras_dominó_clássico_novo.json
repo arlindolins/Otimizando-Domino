@@ -1,0 +1,65 @@
+{
+    "Tópico 1: Distribuição das Peças": {
+        "conjunto": "duplo-6",
+        "total_pecas": 28,
+        "jogadores": 4,
+        "pecas_por_jogador": 6,
+        "pecas_fora_do_jogo": 4,
+        "monte_para_compra": false
+    },
+    "Tópico 2: Definição da Saída": {
+        "primeira_rodada": "jogador com o maior duplo inicia",
+        "demais_rodadas": "dupla vencedora da rodada anterior escolhe quem inicia",
+        "sem_duplo": "reembaralha as peças e redistribui"
+    },
+    "Tópico 3: Jogadas Válidas": {
+        "pontas_abertas": 2,
+        "encaixe_por_valor": true,
+        "uma_jogada_por_turno": true,
+        "jogador_escolhe_melhor_jogada": true
+    },
+    "Tópico 4: Quando um Jogador Não Pode Jogar": {
+        "sem_jogada_valida": "passa a vez",
+        "compra": "não permitida",
+        "sentido_do_jogo": "antihorário",
+        "passar_por_estrategia": false
+    },
+    "Tópico 5: Como o Jogo Termina": {
+        "batida": "jogador joga sua última peça",
+        "travamento": "quatro passes consecutivos",
+        "fim_por_tempo": false
+    },
+    "Tópico 6: Como se Define o Vencedor": {
+        "tipos_de_batida": {
+            "simples": 1,
+            "carroca": 2,
+            "la_e_lo": 3,
+            "cruzada": 4
+        },
+        "travamento": {
+            "criterio": "menor soma individual",
+            "pontos": 1,
+            "empate": {
+                "pontuacao": 0,
+                "bonus_acumulado": true
+            }
+        },
+        "vitoria_final": {
+            "pontos_para_vencer": 6
+        }
+    },
+    "Tópico 7: Regras Especiais": {
+        "ordem_antihoraria": true,
+        "saida_rodadas_futuras": "dupla vencedora escolhe jogador",
+        "bonus_acumulado_indefinido": true,
+        "historico_de_jogadas": [
+            "jogada normal",
+            "passe",
+            "batida",
+            "travamento"
+        ],
+        "identificacao_tipo_batida": true,
+        "revelar_pecas_ocultas_ao_final": true,
+        "log_pontuacao_por_rodada": true
+    }
+}

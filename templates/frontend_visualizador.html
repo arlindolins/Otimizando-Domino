@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Visualizador de Rodada de Dominó</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; background: #f4f4f4; }
+    .painel { margin: 20px 0; background: white; padding: 10px; border-radius: 6px; box-shadow: 0 1px 5px rgba(0,0,0,0.1); }
+    .mao { margin: 5px 0; }
+    .peca { display: inline-block; margin: 2px; padding: 4px 8px; background: #ddd; border-radius: 4px; }
+    .controle { margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <h1>Rodada de Dominó</h1>
+  <button onclick="carregarRodada()">Simular Nova Rodada</button>
+  <div class="painel">
+    <h3>Jogada Atual</h3>
+    <div id="info"></div>
+    <h4>Tabuleiro</h4>
+    <div id="tabuleiro"></div>
+    <h4>Mãos</h4>
+    <div id="maos"></div>
+    <div class="controle">
+      <button onclick="voltar()">◀ Anterior</button>
+      <button onclick="avancar()">Próxima ▶</button>
+    </div>
+  </div>
+</body>
+
+<script>
+let dados = [];
+let idx = 0;
+
+function carregarRodada() {
+  fetch('/simular')
+    .then(res => res.json())
+    .then(data => {
+      dados = data.estados;
+      idx = 0;
+      mostrar();
+    });
+}
+
+function mostrar() {
+  const estado = dados[idx];
+  document.getElementById("info").innerText =
+    `Jogada #${estado.ordem_jogada} | Jogador: ${estado.jogador} | Tipo: ${estado.tipo} | Peça: ${formata(estado.peca)} | Lado: ${estado.lado || '-'}`;
+
+  document.getElementById("tabuleiro").innerHTML = estado.tabuleiro.map(formata).join(' ');
+
+  let htmlMaos = '';
+  for (const j in estado.maos) {
+    htmlMaos += `<div class="mao"><strong>${j}:</strong> ${estado.maos[j].map(formata).join(' ')}</div>`;
+  }
+  document.getElementById("maos").innerHTML = htmlMaos;
+}
+
+function formata(p) {
+  return p ? `<span class="peca">[${p[0]}|${p[1]}]</span>` : '';
+}
+
+function avancar() {
+  if (idx < dados.length - 1) idx++;
+  mostrar();
+}
+
+function voltar() {
+  if (idx > 0) idx--;
+  mostrar();
+}
+</script>
+</html>

@@ -44,8 +44,14 @@ function carregarRodada() {
 
 function mostrar() {
   const estado = dados[idx];
-  document.getElementById("info").innerText =
-    `Jogada #${estado.ordem_jogada} | Jogador: ${estado.jogador} | Tipo: ${estado.tipo} | Peça: ${formata(estado.peca)} | Lado: ${estado.lado || '-'}`;
+  document.getElementById("info").innerHTML = `
+  <p><strong>Jogada #${estado.ordem_jogada}</strong></p>
+  <p>Jogador: ${estado.jogador}</p>
+  <p>Tipo: ${estado.tipo}</p>
+  <p>Peça: ${formata(estado.peca)}</p>
+  <p>Lado: ${estado.lado || '-'}</p>
+  <p><strong>Tipo de Batida:</strong> ${estado.tipo_batida || '-'}</p>
+`;
 
   document.getElementById("tabuleiro").innerHTML = estado.tabuleiro.map(formata).join(' ');
 

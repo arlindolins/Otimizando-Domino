@@ -21,6 +21,8 @@
     <div id="tabuleiro"></div>
     <h4>Mãos</h4>
     <div id="maos"></div>
+    <h4>Jogadas Disponíveis</h4>
+    <div id="jogadas_disponiveis"></div>
     <div class="controle">
       <button onclick="voltar()">◀ Anterior</button>
       <button onclick="avancar()">Próxima ▶</button>
@@ -59,6 +61,8 @@ function mostrar() {
     htmlMaos += `<div class="mao"><strong>${j}:</strong> ${estado.maos[j].map(formata).join(' ')}</div>`;
   }
   document.getElementById("maos").innerHTML = htmlMaos;
+  document.getElementById("jogadas_disponiveis").innerHTML =
+  estado.jogadas_disponiveis.map(formata).join(' ') || '<em>Nenhuma</em>';
 }
 
 function formata(p) {

@@ -111,7 +111,8 @@ def simular_rodada():
 
     while True:
         mao = maos[jogador]
-        jogadas = jogadas_validas(mao, pontas)
+        jogadas_disponiveis = jogadas_validas(mao, pontas)
+        jogadas = jogadas_disponiveis.copy()
 
         if jogadas:
             peca = jogadas[0]
@@ -124,6 +125,7 @@ def simular_rodada():
                 "tipo": tipo,
                 "peca": peca,
                 "lado": lado
+            passes_consecutivos = 0
             })
             if not mao:
                 tipo_batida = tipo_de_batida(peca, jogador, pontas)
@@ -153,7 +155,9 @@ def simular_rodada():
             "tipo_batida": tipo_batida,
             "motivo_fim": motivo_fim,
             "vencedor_rodada": vencedor_rodada,
-            "jogadas": copy.deepcopy(historico)
+            "jogadas": copy.deepcopy(historico),
+            "jogadas_disponiveis": jogadas_disponiveis
+
         })
 
         if motivo_fim:
@@ -162,8 +166,6 @@ def simular_rodada():
         ordem_jogada += 1
         jogador = proximo_jogador(jogador)
 
-    print(estados)
-    
     return {
         "estados": estados,
         "final": {
@@ -172,6 +174,7 @@ def simular_rodada():
             "vencedor_rodada": vencedor_rodada,
             "pontuacao_rodada": pontuacao_rodada
         }
+        
     }
 
 

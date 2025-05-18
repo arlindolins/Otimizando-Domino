@@ -1,7 +1,8 @@
+# domino_v3.py
 import random
 from collections import deque
+import copy
 
-# Geração e distribuição de peças
 def gerar_pecas():
     return [(i, j) for i in range(7) for j in range(i, 7)]
 
@@ -17,7 +18,6 @@ def distribuir_pecas():
     pecas_fora = pecas[24:]
     return maos, pecas_fora
 
-# Funções de regras básicas
 def jogador_com_maior_duplo(maos):
     maior_duplo = -1
     jogador_inicial = None
@@ -36,11 +36,7 @@ def proximo_jogador(jogador_atual):
 def jogadas_validas(mao, pontas):
     if pontas[0] is None:
         return mao
-    jogadas = []
-    for peca in mao:
-        if peca[0] in pontas or peca[1] in pontas:
-            jogadas.append(peca)
-    return jogadas
+    return [peca for peca in mao if peca[0] in pontas or peca[1] in pontas]
 
 def jogar_peca(tabuleiro, pontas, peca):
     if not tabuleiro:
@@ -64,7 +60,6 @@ def jogar_peca(tabuleiro, pontas, peca):
         pontas[1] = peca[0]
         return "direita"
 
-# Nova lógica para definir tipo de batida
 def tipo_de_batida(peca_final, jogador, pontas):
     eh_duplo = peca_final[0] == peca_final[1]
     encaixa_esquerda = (peca_final[0] == pontas[0]) or (peca_final[1] == pontas[0])
@@ -73,7 +68,7 @@ def tipo_de_batida(peca_final, jogador, pontas):
 
     if eh_duplo and encaixa_ambas:
         return "cruzada"
-    elif not eh_duplo and encaixa_ambas and not (pontas[0] == pontas[1]):
+    elif not eh_duplo and encaixa_ambas and pontas[0] != pontas[1]:
         return "la_e_lo"
     elif eh_duplo:
         return "carroca"
@@ -94,22 +89,19 @@ def calcular_pontuacao_travamento(maos):
     menores = [j for j, s in soma_maos.items() if s == soma_maos[vencedor]]
     if len(menores) > 1:
         return None, 0
-    else:
-        return vencedor, 1
+    return vencedor, 1
 
-# Função principal de simulação da rodada
 def simular_rodada():
     maos, _ = distribuir_pecas()
     tabuleiro = deque()
     pontas = [None, None]
     historico = []
+    estados = []
     ordem_jogada = 1
     jogador = jogador_com_maior_duplo(maos)
-    primeira_jogada = jogador
 
     if jogador is None:
-        print("Nenhum duplo encontrado. Reembaralhar.")
-        return
+        return {"erro": "Nenhum duplo encontrado"}
 
     passes_consecutivos = 0
     vencedor_rodada = None
@@ -133,87 +125,49 @@ def simular_rodada():
                 "peca": peca,
                 "lado": lado
             })
-            ordem_jogada += 1
-            passes_consecutivos = 0
-
             if not mao:
                 tipo_batida = tipo_de_batida(peca, jogador, pontas)
                 pontuacao_rodada = calcular_pontuacao_batida(tipo_batida)
                 vencedor_rodada = jogador
                 motivo_fim = "batida"
-                break
         else:
             historico.append({
                 "ordem": ordem_jogada,
                 "jogador": jogador,
                 "tipo": "passe"
             })
-            ordem_jogada += 1
             passes_consecutivos += 1
             if passes_consecutivos == 4:
                 vencedor_rodada, pontuacao_rodada = calcular_pontuacao_travamento(maos)
                 motivo_fim = "travamento"
                 tipo_batida = "travamento"
-                break
 
+        estados.append({
+            "ordem_jogada": ordem_jogada,
+            "jogador": jogador,
+            "tipo": historico[-1]["tipo"],
+            "peca": historico[-1].get("peca"),
+            "lado": historico[-1].get("lado"),
+            "tabuleiro": list(tabuleiro),
+            "maos": copy.deepcopy(maos),
+            "tipo_batida": tipo_batida,
+            "motivo_fim": motivo_fim,
+            "vencedor_rodada": vencedor_rodada,
+            "jogadas": copy.deepcopy(historico)
+        })
+
+        if motivo_fim:
+            break
+
+        ordem_jogada += 1
         jogador = proximo_jogador(jogador)
 
-    print(f"\nRodada encerrada por: {motivo_fim.upper()}")
-    if vencedor_rodada:
-        print(f"Vencedor da rodada: {vencedor_rodada}")
-        print(f"Tipo de batida: {tipo_batida}")
-        print(f"Ponta esquerda: {pontas[0]}, Ponta direita: {pontas[1]}")
-        print(f"Pontuação conquistada: {pontuacao_rodada}")
-        print(historico)
-    else:
-        print("Empate no travamento.")
-        print(historico)
-
     return {
-        "maos": maos,
-        "tabuleiro": list(tabuleiro),
-        "pontas_abertas": pontas,
-        "historico": historico,
-        "vencedor_rodada": vencedor_rodada,
-        "motivo_fim": motivo_fim,
-        "tipo_batida": tipo_batida,
-        "pontuacao_rodada": pontuacao_rodada
+        "estados": estados,
+        "final": {
+            "tipo_batida": tipo_batida,
+            "motivo_fim": motivo_fim,
+            "vencedor_rodada": vencedor_rodada,
+            "pontuacao_rodada": pontuacao_rodada
+        }
     }
-
-
-# Testar se o script está rodando
-if __name__ == "__main__":
-    resultado = simular_rodada()
-
-if __name__ == "__main__":
-    resultados = []
-
-    for i in range(1, 101):  # Rodar 100 vezes
-        print(f"\nRodada {i}")
-        resultado = simular_rodada()
-
-        if resultado["vencedor_rodada"]:  # Se houve vencedor
-            historico = resultado["historico"]
-            ultima_jogada = next((j for j in reversed(historico) if j["tipo"] == "batida" or j["tipo"] == "jogada"), None)
-            peca_vencedora = ultima_jogada["peca"] if ultima_jogada else None
-
-            resultados.append({
-                "rodada": i,
-                "tipo_batida": resultado["tipo_batida"],
-                "peca_vencedora": peca_vencedora,
-                "pontas_abertas": resultado["pontas_abertas"]
-            })
-        else:
-            resultados.append({
-                "rodada": i,
-                "tipo_batida": "travamento",
-                "peca_vencedora": None,
-                "pontas_abertas": resultado["pontas_abertas"],
-                "historico": historico
-            })
-
-            
-
-    print("\n=== RESUMO FINAL ===\n")
-    for r in resultados:
-        print(f"Rodada {r['rodada']}: Tipo de Batida: {r['tipo_batida']}, Peca Vencedora: {r['peca_vencedora']}, Pontas Abertas: {r['pontas_abertas']}")

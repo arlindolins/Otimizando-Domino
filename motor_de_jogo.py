@@ -132,7 +132,7 @@ def simular_rodada():
                         "lado": lado
                     })
             else:
-                peca = jogadas[0]
+                peca = escolher_peca(jogadas, tabuleiro, pontas, mao, estrategia)
                 mao.remove(peca)
                 lado = jogar_peca(tabuleiro, pontas, peca)
                 tipo = "batida" if not mao else "jogada"
@@ -193,6 +193,44 @@ def simular_rodada():
         }
         
     }
+def simular_partida():
+    duplas = {
+        "Dupla_1": ["J1", "J3"],
+        "Dupla_2": ["J2", "J4"]
+    }
+    pontuacao = {
+        "Dupla_1": 0,
+        "Dupla_2": 0
+    }
+    rodadas = []
+    vencedor_partida = None
+    pontos_para_vencer = 6
+
+    while max(pontuacao.values()) < pontos_para_vencer:
+        rodada = simular_rodada()
+
+        if "erro" in rodada:
+            continue  # Reembaralhar se não houver duplo
+
+        info = rodada["final"]
+        rodadas.append(rodada)
+
+        jogador = info["vencedor_rodada"]
+        pontos = info["pontuacao_rodada"]
+
+        if jogador:
+            dupla_vencedora = "Dupla_1" if jogador in duplas["Dupla_1"] else "Dupla_2"
+            pontuacao[dupla_vencedora] += pontos
+
+    vencedor_partida = max(pontuacao, key=pontuacao.get)
+
+    return {
+        "duplas": duplas,
+        "pontuacao": pontuacao,
+        "rodadas": rodadas,
+        "vencedor_partida": vencedor_partida
+    }
+
 
 
     

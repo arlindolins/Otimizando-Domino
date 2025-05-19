@@ -120,7 +120,17 @@ def simular_rodada():
         if jogadas:
 
             if ordem_jogada == 1:
-                    peca = maior_duplo
+                    peca = (maior_duplo,maior_duplo)
+                    mao.remove(peca)
+                    lado = jogar_peca(tabuleiro, pontas, peca)
+                    tipo = "batida" if not mao else "jogada"
+                    historico.append({
+                        "ordem": ordem_jogada,
+                        "jogador": jogador,
+                        "tipo": tipo,
+                        "peca": peca,
+                        "lado": lado
+                    })
             else:
                 peca = jogadas[0]
                 mao.remove(peca)

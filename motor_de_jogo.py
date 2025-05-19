@@ -26,10 +26,12 @@ def jogador_com_maior_duplo(maos):
             if peca[0] == peca[1] and peca[0] > maior_duplo:
                 maior_duplo = peca[0]
                 jogador_inicial = jogador
-    return jogador_inicial
+    
+    return jogador_inicial, maior_duplo
+
 
 def proximo_jogador(jogador_atual):
-    ordem = ["J1", "J4", "J3", "J2"]
+    ordem = ["J1", "J2", "J3", "J4"]
     idx = ordem.index(jogador_atual)
     return ordem[(idx + 1) % 4]
 
@@ -98,7 +100,8 @@ def simular_rodada():
     historico = []
     estados = []
     ordem_jogada = 1
-    jogador = jogador_com_maior_duplo(maos)
+    jogador, maior_duplo = jogador_com_maior_duplo(maos)
+
 
     if jogador is None:
         return {"erro": "Nenhum duplo encontrado"}
@@ -115,23 +118,27 @@ def simular_rodada():
         jogadas = jogadas_disponiveis.copy()
 
         if jogadas:
-            peca = jogadas[0]
-            mao.remove(peca)
-            lado = jogar_peca(tabuleiro, pontas, peca)
-            tipo = "batida" if not mao else "jogada"
-            historico.append({
-                "ordem": ordem_jogada,
-                "jogador": jogador,
-                "tipo": tipo,
-                "peca": peca,
-                "lado": lado
-            passes_consecutivos = 0
-            })
-            if not mao:
-                tipo_batida = tipo_de_batida(peca, jogador, pontas)
-                pontuacao_rodada = calcular_pontuacao_batida(tipo_batida)
-                vencedor_rodada = jogador
-                motivo_fim = "batida"
+
+            if ordem_jogada == 1:
+                    peca = maior_duplo
+            else:
+                peca = jogadas[0]
+                mao.remove(peca)
+                lado = jogar_peca(tabuleiro, pontas, peca)
+                tipo = "batida" if not mao else "jogada"
+                historico.append({
+                    "ordem": ordem_jogada,
+                    "jogador": jogador,
+                    "tipo": tipo,
+                    "peca": peca,
+                    "lado": lado
+                })
+                passes_consecutivos = 0
+                if not mao:
+                    tipo_batida = tipo_de_batida(peca, jogador, pontas)
+                    pontuacao_rodada = calcular_pontuacao_batida(tipo_batida)
+                    vencedor_rodada = jogador
+                    motivo_fim = "batida"
         else:
             historico.append({
                 "ordem": ordem_jogada,

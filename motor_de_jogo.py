@@ -3,6 +3,7 @@ import random
 from collections import deque
 import copy
 
+
 def gerar_pecas():
     return [(i, j) for i in range(7) for j in range(i, 7)]
 
@@ -132,7 +133,7 @@ def simular_rodada():
                         "lado": lado
                     })
             else:
-                peca = escolher_peca(jogadas, tabuleiro, pontas, mao, estrategia)
+                peca = jogadas[0]
                 mao.remove(peca)
                 lado = jogar_peca(tabuleiro, pontas, peca)
                 tipo = "batida" if not mao else "jogada"
@@ -193,7 +194,9 @@ def simular_rodada():
         }
         
     }
-def simular_partida():
+def simular_partida(pontuacao_por_jogador=None):
+    
+    
     duplas = {
         "Dupla_1": ["J1", "J3"],
         "Dupla_2": ["J2", "J4"]
@@ -202,6 +205,9 @@ def simular_partida():
         "Dupla_1": 0,
         "Dupla_2": 0
     }
+    if pontuacao_por_jogador is None:
+        pontuacao_por_jogador = {jogador: 0 for dupla in duplas.values() for jogador in dupla}
+
     rodadas = []
     vencedor_partida = None
     pontos_para_vencer = 6
@@ -210,7 +216,7 @@ def simular_partida():
         rodada = simular_rodada()
 
         if "erro" in rodada:
-            continue  # Reembaralhar se não houver duplo
+            continue
 
         info = rodada["final"]
         rodadas.append(rodada)
@@ -224,13 +230,26 @@ def simular_partida():
 
     vencedor_partida = max(pontuacao, key=pontuacao.get)
 
+    # ✅ Atualiza pontuação por jogador
+    for jogador in duplas[vencedor_partida]:
+        pontuacao_por_jogador[jogador] += 1
+
     return {
         "duplas": duplas,
         "pontuacao": pontuacao,
+        "pontuacao_por_jogador": pontuacao_por_jogador,
         "rodadas": rodadas,
         "vencedor_partida": vencedor_partida
     }
 
+# Acumular pontuação de 10 partidas:
+pontuacao_jogadores = {"J1": 0, "J2": 0, "J3": 0, "J4": 0}
+
+for _ in range(1000):
+    resultado = simular_partida(pontuacao_jogadores)
+
+print("Pontuação acumulada por jogador:")
+print(pontuacao_jogadores)
 
 
     

@@ -1,0 +1,13 @@
+{
+  "name": "domino-visualizer",
+  "version": "1.0.0",
+  "description": "Dominó game visualizer",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "node app.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}

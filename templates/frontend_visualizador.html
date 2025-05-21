@@ -7,8 +7,48 @@
     body { font-family: sans-serif; padding: 20px; background: #f4f4f4; }
     .painel { margin: 20px 0; background: white; padding: 10px; border-radius: 6px; box-shadow: 0 1px 5px rgba(0,0,0,0.1); }
     .mao { margin: 5px 0; }
-    .peca { display: inline-block; margin: 2px; padding: 4px 8px; background: #ddd; border-radius: 4px; }
+    .peca { 
+      display: inline-flex;
+      margin: 2px;
+      background: #fff;
+      border: 2px solid #333;
+      border-radius: 4px;
+      padding: 2px;
+    }
+    .metade {
+      width: 30px;
+      height: 60px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      padding: 3px;
+      gap: 1px;
+    }
+    .separador {
+      width: 2px;
+      background: #333;
+      margin: 5px 0;
+    }
+    .pip {
+      width: 6px;
+      height: 6px;
+      background: #333;
+      border-radius: 50%;
+      margin: auto;
+    }
     .controle { margin-top: 10px; }
+    button {
+      padding: 8px 16px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      margin: 0 5px;
+    }
+    button:hover {
+      background: #0056b3;
+    }
   </style>
 </head>
 <body>
@@ -21,7 +61,7 @@
     <div id="tabuleiro"></div>
     <h4>Mãos</h4>
     <div id="maos"></div>
-    <h4>Jogadas Disponíveis</h4>
+    <h4>Jogadas Disponíveis (Próximo Jogador)</h4>
     <div id="jogadas_disponiveis"></div>
     <div class="controle">
       <button onclick="voltar()">◀ Anterior</button>
@@ -44,8 +84,43 @@ function carregarRodada() {
     });
 }
 
+function criarPips(numero) {
+  const posicoes = {
+    0: [],
+    1: [4],
+    2: [2,6],
+    3: [2,4,6],
+    4: [0,2,6,8],
+    5: [0,2,4,6,8],
+    6: [0,2,3,5,6,8]
+  };
+  
+  let html = '<div class="metade">';
+  for (let i = 0; i < 9; i++) {
+    html += posicoes[numero].includes(i) ? '<div class="pip"></div>' : '<div></div>';
+  }
+  html += '</div>';
+  return html;
+}
+
+function formata(p) {
+  if (!p) return '';
+  return `<div class="peca">
+    ${criarPips(p[0])}
+    <div class="separador"></div>
+    ${criarPips(p[1])}
+  </div>`;
+}
+
+function formataTexto(p) {
+  return p ? `[${p[0]}|${p[1]}]` : '-';
+}
+
 function mostrar() {
   const estado = dados[idx];
+  const proximoJogador = getProximoJogador(estado.jogador);
+  const proximasJogadas = idx < dados.length - 1 ? dados[idx + 1].jogadas_disponiveis : [];
+  
   document.getElementById("info").innerHTML =
   `<strong>Jogada #${estado.ordem_jogada}</strong> |
    Jogador: ${estado.jogador} |
@@ -61,16 +136,15 @@ function mostrar() {
     htmlMaos += `<div class="mao"><strong>${j}:</strong> ${estado.maos[j].map(formata).join(' ')}</div>`;
   }
   document.getElementById("maos").innerHTML = htmlMaos;
-  document.getElementById("jogadas_disponiveis").innerHTML =
-  estado.jogadas_disponiveis.map(formata).join(' ') || '<em>Nenhuma</em>';
+  
+  document.getElementById("jogadas_disponiveis").innerHTML = 
+    `<strong>Próximo jogador (${proximoJogador}):</strong> ${proximasJogadas.map(formata).join(' ') || '<em>Nenhuma</em>'}`;
 }
 
-function formata(p) {
-  return p ? `<span class="peca">[${p[0]}|${p[1]}]</span>` : '';
-}
-
-function formataTexto(p) {
-  return p ? `[${p[0]}|${p[1]}]` : '-';
+function getProximoJogador(jogadorAtual) {
+  const ordem = ["J1", "J2", "J3", "J4"];
+  const idx = ordem.indexOf(jogadorAtual);
+  return ordem[(idx + 1) % 4];
 }
 
 function avancar() {

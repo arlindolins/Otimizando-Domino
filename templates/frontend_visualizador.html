@@ -60,10 +60,34 @@
     button:hover {
       background: #0056b3;
     }
+    .placar {
+      margin: 20px 0;
+      padding: 15px;
+      background: #e9ecef;
+      border-radius: 6px;
+    }
+    .historico-rodadas {
+      margin-top: 10px;
+      font-size: 0.9em;
+    }
+    .historico-item {
+      margin: 5px 0;
+      padding: 5px;
+      background: #f8f9fa;
+      border-radius: 4px;
+    }
   </style>
 </head>
 <body>
   <h1>Rodada de Dominó</h1>
+  <div class="placar">
+    <h3>Placar</h3>
+    <div id="placar-atual"></div>
+    <div class="historico-rodadas">
+      <h4>Histórico de Rodadas</h4>
+      <div id="historico"></div>
+    </div>
+  </div>
   <button onclick="carregarRodada()">Simular Nova Rodada</button>
   <div class="painel">
     <h3>Jogada Atual</h3>
@@ -84,15 +108,40 @@
 <script>
 let dados = [];
 let idx = 0;
+let placarGlobal = { "Dupla_1": 0, "Dupla_2": 0 };
+let historicoRodadas = [];
 
 function carregarRodada() {
   fetch('/simular')
     .then(res => res.json())
     .then(data => {
       dados = data.estados;
+      placarGlobal = data.placar;
+      historicoRodadas = data.historicoRodadas;
       idx = 0;
       mostrar();
+      atualizarPlacar();
     });
+}
+
+function atualizarPlacar() {
+  const placarHtml = `
+    <div>Dupla 1 (J1/J3): ${placarGlobal["Dupla_1"]} pontos</div>
+    <div>Dupla 2 (J2/J4): ${placarGlobal["Dupla_2"]} pontos</div>
+  `;
+  document.getElementById("placar-atual").innerHTML = placarHtml;
+
+  const historicoHtml = historicoRodadas.map((rodada, i) => `
+    <div class="historico-item">
+      Rodada ${i + 1}: ${rodada.dupla} venceu com ${rodada.tipoBatida} (${rodada.pontos} pontos)
+    </div>
+  `).join('');
+  document.getElementById("historico").innerHTML = historicoHtml;
+
+  if (placarGlobal["Dupla_1"] >= 7 || placarGlobal["Dupla_2"] >= 7) {
+    const vencedor = placarGlobal["Dupla_1"] >= 7 ? "Dupla 1" : "Dupla 2";
+    alert(`${vencedor} venceu a partida!`);
+  }
 }
 
 function criarPips(numero) {
@@ -147,12 +196,12 @@ function mostrar() {
 
   let htmlMaos = '';
   for (const j in estado.maos) {
-    htmlMaos += `<div class="mao"><strong>${j}:</strong> ${estado.maos[j].map(p => formata(p, false)).join(' ')}</div>`;
+    htmlMaos += `<div class="mao"><strong>${j}:</strong> ${estado.maos[j].map(p => formata(p)).join(' ')}</div>`;
   }
   document.getElementById("maos").innerHTML = htmlMaos;
   
   document.getElementById("jogadas_disponiveis").innerHTML = 
-    `<strong>Próximo jogador (${proximoJogador}):</strong> ${proximasJogadas.map(p => formata(p, false)).join(' ') || '<em>Nenhuma</em>'}`;
+    `<strong>Próximo jogador (${proximoJogador}):</strong> ${proximasJogadas.map(p => formata(p)).join(' ') || '<em>Nenhuma</em>'}`;
 }
 
 function getProximoJogador(jogadorAtual) {

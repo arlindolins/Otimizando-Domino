@@ -117,6 +117,13 @@ function calcularPontuacaoTravamento(maos) {
   return vencedores.length > 1 ? [null, 0] : [vencedores[0], 1];
 }
 
+let placar = {
+  "Dupla_1": 0,
+  "Dupla_2": 0
+};
+
+let historicoRodadas = [];
+
 function simularRodada() {
   const [maos, _] = distribuirPecas();
   const tabuleiro = [];
@@ -203,7 +210,19 @@ function simularRodada() {
       jogadas_disponiveis: jogadasDisponiveis
     });
 
-    if (motivoFim) break;
+    if (motivoFim) {
+      if (vencedorRodada) {
+        const dupla = ["J1", "J3"].includes(vencedorRodada) ? "Dupla_1" : "Dupla_2";
+        placar[dupla] += pontuacaoRodada;
+        historicoRodadas.push({
+          vencedor: vencedorRodada,
+          tipoBatida,
+          pontos: pontuacaoRodada,
+          dupla
+        });
+      }
+      break;
+    }
 
     ordemJogada++;
     jogador = proximoJogador(jogador);
@@ -216,7 +235,9 @@ function simularRodada() {
       motivo_fim: motivoFim,
       vencedor_rodada: vencedorRodada,
       pontuacao_rodada: pontuacaoRodada
-    }
+    },
+    placar,
+    historicoRodadas
   };
 }
 

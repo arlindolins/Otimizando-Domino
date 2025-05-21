@@ -15,16 +15,27 @@
       border-radius: 4px;
       padding: 2px;
     }
+    .peca-vertical {
+      flex-direction: column;
+    }
+    .peca-horizontal {
+      flex-direction: row;
+    }
     .metade {
       width: 30px;
-      height: 60px;
+      height: 30px;
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       grid-template-rows: repeat(3, 1fr);
       padding: 3px;
       gap: 1px;
     }
-    .separador {
+    .separador-vertical {
+      height: 2px;
+      background: #333;
+      margin: 0 5px;
+    }
+    .separador-horizontal {
       width: 2px;
       background: #333;
       margin: 5px 0;
@@ -103,11 +114,14 @@ function criarPips(numero) {
   return html;
 }
 
-function formata(p) {
+function formata(p, isBoard = false) {
   if (!p) return '';
-  return `<div class="peca">
+  const isDuplo = p[0] === p[1];
+  const orientation = isBoard && !isDuplo ? 'horizontal' : 'vertical';
+  
+  return `<div class="peca peca-${orientation}">
     ${criarPips(p[0])}
-    <div class="separador"></div>
+    <div class="separador-${orientation}"></div>
     ${criarPips(p[1])}
   </div>`;
 }
@@ -129,16 +143,16 @@ function mostrar() {
    Lado: ${estado.lado || '-'} |
    Tipo de Batida: ${estado.tipo_batida || '-'}`;
 
-  document.getElementById("tabuleiro").innerHTML = estado.tabuleiro.map(formata).join(' ');
+  document.getElementById("tabuleiro").innerHTML = estado.tabuleiro.map(p => formata(p, true)).join(' ');
 
   let htmlMaos = '';
   for (const j in estado.maos) {
-    htmlMaos += `<div class="mao"><strong>${j}:</strong> ${estado.maos[j].map(formata).join(' ')}</div>`;
+    htmlMaos += `<div class="mao"><strong>${j}:</strong> ${estado.maos[j].map(p => formata(p, false)).join(' ')}</div>`;
   }
   document.getElementById("maos").innerHTML = htmlMaos;
   
   document.getElementById("jogadas_disponiveis").innerHTML = 
-    `<strong>Próximo jogador (${proximoJogador}):</strong> ${proximasJogadas.map(formata).join(' ') || '<em>Nenhuma</em>'}`;
+    `<strong>Próximo jogador (${proximoJogador}):</strong> ${proximasJogadas.map(p => formata(p, false)).join(' ') || '<em>Nenhuma</em>'}`;
 }
 
 function getProximoJogador(jogadorAtual) {

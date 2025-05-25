@@ -2,6 +2,11 @@
 import random
 from collections import deque
 import copy
+import json
+import csv
+import os
+import uuid
+import time
 
 
 def gerar_pecas():
@@ -242,15 +247,78 @@ def simular_partida(pontuacao_por_jogador=None):
         "vencedor_partida": vencedor_partida
     }
 
-# Acumular pontuação de 10 partidas:
-pontuacao_jogadores = {"J1": 0, "J2": 0, "J3": 0, "J4": 0}
+# NOVA FUNÇÃO PARA SALVAR O HISTÓRICO COMPLETO DAS PARTIDAS
 
-for _ in range(1000):
-    resultado = simular_partida(pontuacao_jogadores)
+def simular_varias_partidas_em_csv(n=10000, pasta_destino="historico_csv"):
+    os.makedirs(pasta_destino, exist_ok=True)
+    
+    partidas_csv = open(os.path.join(pasta_destino, "partidas.csv"), mode="w", newline="")
+    rodadas_csv = open(os.path.join(pasta_destino, "rodadas.csv"), mode="w", newline="")
+    jogadas_csv = open(os.path.join(pasta_destino, "jogadas.csv"), mode="w", newline="")
 
-print("Pontuação acumulada por jogador:")
-print(pontuacao_jogadores)
+    writer_partidas = csv.writer(partidas_csv)
+    writer_rodadas = csv.writer(rodadas_csv)
+    writer_jogadas = csv.writer(jogadas_csv)
 
+    writer_partidas.writerow(["id_partida", "vencedor_partida", "pontuacao_J1", "pontuacao_J2", "pontuacao_J3", "pontuacao_J4"])
+    writer_rodadas.writerow(["id_partida", "id_rodada", "inicio_rodada", "tipo_batida", "motivo_fim", "vencedor_rodada", "pontuacao_rodada"])
+    writer_jogadas.writerow(["id_partida", "id_rodada", "ordem_jogada", "jogador", "tipo", "peca_x", "peca_y", "lado"])
+
+    pontuacao_jogadores = {"J1": 0, "J2": 0, "J3": 0, "J4": 0}
 
     
+    for _ in range(n):
+        id_partida = str(uuid.uuid4())
+        resultado = simular_partida(pontuacao_por_jogador=pontuacao_jogadores)
 
+        writer_partidas.writerow([
+            id_partida,
+            resultado["vencedor_partida"],
+            resultado["pontuacao_por_jogador"]["J1"],
+            resultado["pontuacao_por_jogador"]["J2"],
+            resultado["pontuacao_por_jogador"]["J3"],
+            resultado["pontuacao_por_jogador"]["J4"]
+        ])
+
+        for id_rodada, rodada in enumerate(resultado["rodadas"]):
+            final = rodada["final"]
+            writer_rodadas.writerow([
+                id_partida,
+                id_rodada,
+                rodada["estados"][0]["jogador"],
+                final["tipo_batida"],
+                final["motivo_fim"],
+                final["vencedor_rodada"],
+                final["pontuacao_rodada"]
+            ])
+
+            for estado in rodada["estados"]:
+                if estado["tipo"] in ["jogada", "batida"] and estado["peca"]:
+                    x, y = estado["peca"]
+                else:
+                    x, y = "", ""
+                writer_jogadas.writerow([
+                    id_partida,
+                    id_rodada,
+                    estado["ordem_jogada"],
+                    estado["jogador"],
+                    estado["tipo"],
+                    x,
+                    y,
+                    estado.get("lado", "")
+                ])
+
+    partidas_csv.close()
+    rodadas_csv.close()
+    jogadas_csv.close()
+
+    
+    print("\nExportação concluída. Arquivos salvos em:", pasta_destino)
+    
+
+if __name__ == "__main__":
+    
+    inicio = time.time()
+    simular_varias_partidas_em_csv(n=10000)
+    fim = time.time()
+    print(f"Tempo total de execução: {fim - inicio:.2f} segundos")

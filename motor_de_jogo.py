@@ -50,7 +50,7 @@ def simular_rodada(jogadores: List[Jogador], jogador_inicial_nome: Optional[str]
         jogadas = jogador_atual.jogadas_validas(tabuleiro.obter_pontas())
 
         if jogadas:
-            if ordem_jogada == 1:
+            if ordem_jogada == 1 and jogador_inicial_nome is None:
                 # Primeira jogada: deve ser o maior duplo
                 peca_jogada = next(p for p in jogador_atual.mao if p.is_duplo() and p.lado1 == maior_duplo)
             else:

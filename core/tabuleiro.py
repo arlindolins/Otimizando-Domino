@@ -1,4 +1,5 @@
 from collections import deque
+from core.peca import Peca
 
 class Tabuleiro:
     def __init__(self):

@@ -1,3 +1,5 @@
+from core.peca import Peca
+
 class Jogador:
     def __init__(self, nome: str, mao: list[Peca]):
         self.nome = nome

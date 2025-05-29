@@ -1,3 +1,5 @@
+from core.dupla import Dupla
+
 class Partida:
     def __init__(self, duplas: list[Dupla], pontos_para_vencer: int = 6):
         self.duplas = {d.nome: d for d in duplas}

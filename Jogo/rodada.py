@@ -1,3 +1,6 @@
+from core.jogador import Jogador
+from core.tabuleiro import Tabuleiro
+
 class Rodada:
     def __init__(self, jogadores: list[Jogador], jogador_inicial: str):
         self.jogadores = {j.nome: j for j in jogadores}

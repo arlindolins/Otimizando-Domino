@@ -128,8 +128,7 @@ def simular_partida(pontos_para_vencer: int = 6, pontuacao_por_jogador: Optional
         "Dupla_2": Dupla("Dupla_2", ["J2", "J4"])
     }
 
-    if pontuacao_por_jogador is None:
-        pontuacao_por_jogador = {nome: 0 for dupla in duplas.values() for nome in dupla.jogadores}
+    pontuacao_por_jogador = {nome: 0 for dupla in duplas.values() for nome in dupla.jogadores}
 
     rodadas = []
     jogador_inicial_nome = None  # definido dinamicamente a cada rodada
@@ -155,7 +154,7 @@ def simular_partida(pontos_para_vencer: int = 6, pontuacao_por_jogador: Optional
             else:
                 duplas["Dupla_2"].adicionar_pontos(pontos)
 
-            pontuacao_por_jogador[jogador_vencedor] += 1
+            pontuacao_por_jogador[jogador_vencedor] += pontos
 
     vencedor_partida = max(duplas.items(), key=lambda item: item[1].pontuacao)[0]
 
@@ -166,6 +165,7 @@ def simular_partida(pontos_para_vencer: int = 6, pontuacao_por_jogador: Optional
         "vencedor_partida": vencedor_partida
     }
 
+pontuacao_jogadores = {"J1": 0, "J2": 0, "J3": 0, "J4": 0}
 
 # NOVA FUNÇÃO PARA SALVAR O HISTÓRICO COMPLETO DAS PARTIDAS
 
@@ -181,10 +181,8 @@ def simular_varias_partidas_em_csv(n=10, pasta_destino="historico_csv"):
     writer_jogadas = csv.writer(jogadas_csv)
 
     writer_partidas.writerow(["id_partida", "vencedor_partida", "pontuacao_J1", "pontuacao_J2", "pontuacao_J3", "pontuacao_J4"])
-    writer_rodadas.writerow(["id_partida", "id_rodada", "inicio_rodada", "tipo_batida", "motivo_fim", "vencedor_rodada", "pontuacao_rodada"])
+    writer_rodadas.writerow(["id_partida", "id_rodada", "inicio_rodada", "tipo_batida", "motivo_fim", "vencedor_rodada", "pontuacao_rodada", "pontuacao_J1", "pontuacao_J2", "pontuacao_J3", "pontuacao_J4"])
     writer_jogadas.writerow(["id_partida", "id_rodada", "ordem_jogada", "jogador", "tipo", "peca_x", "peca_y", "lado"])
-
-    pontuacao_jogadores = {"J1": 0, "J2": 0, "J3": 0, "J4": 0}
 
     
     for _ in range(n):
@@ -209,7 +207,11 @@ def simular_varias_partidas_em_csv(n=10, pasta_destino="historico_csv"):
                 final["tipo_batida"],
                 final["motivo_fim"],
                 final["vencedor_rodada"],
-                final["pontuacao_rodada"]
+                final["pontuacao_rodada"],
+                resultado["pontuacao_por_jogador"]["J1"],
+                resultado["pontuacao_por_jogador"]["J2"],
+                resultado["pontuacao_por_jogador"]["J3"],
+                resultado["pontuacao_por_jogador"]["J4"]
             ])
 
             for estado in rodada["estados"]:

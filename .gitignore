@@ -6,3 +6,30 @@
 /Logo.png
 /regras_dominó_clássico_novo.pdf
 /simulador_dominio.py
+historico_csv/jogadas.csv
+historico_csv/partidas.csv
+historico_csv/rodadas.csv
+core/__pycache__/dupla.cpython-311.pyc
+core/__pycache__/jogador.cpython-311.pyc
+core/__pycache__/peca.cpython-311.pyc
+core/__pycache__/tabuleiro.cpython-311.pyc
+regras/__pycache__/game_logic.cpython-311.pyc
+utilidades/__pycache__/distribuicao.cpython-311.pyc
+estrutura_etapa3_dominio.json
+motor_de_jogo_com_motor_decisao.py
+motor_decisao.py
+regras_dominó_clássico_novo.json
+0. Old/domino_v2.py
+0. Old/domino.ipynb
+0. Old/domino.py.ipynb
+0. Old/estrutura_etapa3_dominio.json
+0. Old/estrutura_etapa3_dominio.pdf
+0. Old/historico_jogo_simulado.html
+0. Old/Logo.png
+0. Old/regras_dominó_clássico_novo.json
+0. Old/regras_dominó_clássico_novo.pdf
+0. Old/simulador_dominio.py
+estrutura_etapa3_dominio.json
+motor_de_jogo_com_motor_decisao.py
+motor_decisao.py
+regras_dominó_clássico_novo.json

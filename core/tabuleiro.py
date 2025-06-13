@@ -35,6 +35,22 @@ class Tabuleiro:
             return "direita"
         else:
             raise ValueError("Jogada inválida")
+        
+    def projetar_pontas(self, peca, lado):
+        """
+        Retorna (left, right) caso 'peca' fosse jogada em 'lado'.
+        Não altera o estado real do tabuleiro.
+        """
+        left, right = self.pontas
+        if lado is None:           # primeira jogada
+            return (peca.lado1, peca.lado2)
+        if lado == "esquerda":
+            new_left = peca.lado1 if peca.lado2 == left else peca.lado2
+            return (new_left, right)
+        else:
+            new_right = peca.lado2 if peca.lado1 == right else peca.lado1
+            return (left, new_right)
+
 
     def obter_pontas(self) -> tuple[int, int]:
         return tuple(self.pontas)

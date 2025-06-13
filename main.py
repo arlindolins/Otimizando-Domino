@@ -1,6 +1,5 @@
 # main.py
 
-from motor_de_jogo_com_motor_decisao import distribuir_pecas, jogar_peca, jogadas_validas, proximo_jogador, tipo_de_batida, calcular_pontuacao_batida, calcular_pontuacao_travamento, continuar_rodada
 from motor_decisao import escolher_peca_mcts
 from collections import deque
 import copy

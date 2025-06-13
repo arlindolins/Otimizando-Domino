@@ -16,7 +16,7 @@ As táticas contempladas são:
 Requisitos
 ----------
 O **motor de jogo** deve oferecer:
-    from motor_de_jogo import run_match_v2
+    from motor_ga_patch import run_match_v2
 onde
     wins = run_match_v2(weights: list[float], n_games: int) -> int
 · `weights` é lista de 8 floats
@@ -48,13 +48,13 @@ def random_weights() -> List[float]:
     return [random.uniform(low, high) for _ in range(N_WEIGHTS)]
 
 ###############################################################################
-# 2. Avaliação — ligação com motor_de_jogo.run_match_v2
+# 2. Avaliação — ligação com motor_ga_patch.run_match_v2
 ###############################################################################
 try:
-    from motor_de_jogo import run_match_v2  # pylint: disable=import-error
+    from motor_ga_patch import run_match_v2  # pylint: disable=import-error
 except ImportError as exc:
     raise ImportError(
-        "motor_de_jogo.run_match_v2 não encontrado.  "
+        "motor_ga_patch.run_match_v2 não encontrado.  "
         "Crie esta função conforme orientado no § 6 do arquivo."
     ) from exc
 

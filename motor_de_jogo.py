@@ -16,8 +16,9 @@ from regras.game_logic import (
     proximo_jogador_obj,
     determinar_tipo_batida,
     pontuacao_por_tipo,
-    determinar_vencedor_travamento
+    determinar_vencedor_travamento,
 )
+from mcts_engine import escolher_peca_mcts
 
 def simular_rodada(jogadores: List[Jogador], jogador_inicial_nome: Optional[str] = None):
     tabuleiro = Tabuleiro()
@@ -54,7 +55,10 @@ def simular_rodada(jogadores: List[Jogador], jogador_inicial_nome: Optional[str]
                 # Primeira jogada: deve ser o maior duplo
                 peca_jogada = next(p for p in jogador_atual.mao if p.is_duplo() and p.lado1 == maior_duplo)
             else:
-                peca_jogada = jogadas[0]
+                if jogador_atual.nome in ("J1", "J3"):
+                    peca_jogada = escolher_peca_mcts(jogador_atual, jogadores, tabuleiro)
+                else:
+                    peca_jogada = jogadas[0]
 
             jogador_atual.remover_peca(peca_jogada)
             lado = tabuleiro.jogar(peca_jogada)

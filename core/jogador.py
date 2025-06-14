@@ -105,8 +105,30 @@ class GAJogador(Jogador):
     """Jogador que utiliza pesos de uma heurística estilo GA."""
 
     def __init__(self, nome: str, mao: Sequence[Peca], pesos: Sequence[float]):
+        """Inicializa o jogador com uma lista de ``8`` pesos.
+
+        Os valores devem seguir a ordem definida em ``ga_domino.py``:
+
+        ``w0``‥``w7`` → ``opp_can``, ``partner_can``, ``opp_unknown``,
+        ``partner_unknown``, ``own_future``, ``pip_sum``, ``can_finish_type`` e
+        ``enemy_close_to_game``.
+        """
+        if len(pesos) != 8:
+            raise ValueError("esperados 8 pesos para a estratégia GA")
+
         super().__init__(nome, mao)
         self.pesos = list(pesos)
+
+        (
+            self.w0,
+            self.w1,
+            self.w2,
+            self.w3,
+            self.w4,
+            self.w5,
+            self.w6,
+            self.w7,
+        ) = self.pesos
 
     def escolher_peca(self, tabuleiro, jogadores):
         return escolher_peca_ga(self, tabuleiro, jogadores, self.pesos)

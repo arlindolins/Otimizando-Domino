@@ -70,7 +70,6 @@ class CLIJogador(Jogador):
                 print("Entrada inválida.")
         return jogadas[escolha]
 
-
 def escolher_peca_ga(jogador: "Jogador", tabuleiro, jogadores, pesos: Sequence[float]):
     """Escolhe a peça com base em uma heurística ponderada.
 
@@ -111,4 +110,3 @@ class GAJogador(Jogador):
 
     def escolher_peca(self, tabuleiro, jogadores):
         return escolher_peca_ga(self, tabuleiro, jogadores, self.pesos)
-

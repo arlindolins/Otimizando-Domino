@@ -5,7 +5,6 @@ import csv
 import os
 import uuid
 import time
-import random
 from typing import List, Dict, Optional
 from core.peca import Peca
 from core.jogador import Jogador

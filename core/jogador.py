@@ -70,3 +70,43 @@ class CLIJogador(Jogador):
                 print("Entrada inválida.")
         return jogadas[escolha]
 
+def escolher_peca_ga(jogador: "Jogador", tabuleiro, jogadores, pesos: Sequence[float]):
+    """Escolhe a peça com base em uma heurística ponderada.
+
+    Os pesos devem ser uma sequência numérica. Apenas três características são
+    consideradas:
+
+    - ``pesos[0]`` → soma dos valores da peça (pip sum)
+    - ``pesos[1]`` → bônus se a peça for dupla
+    - ``pesos[2]`` → bônus se a peça encaixa em ambas as pontas
+    """
+
+    jogadas = jogador.jogadas_validas(tabuleiro.obter_pontas())
+    if not jogadas:
+        raise ValueError("Jogador não possui jogadas válidas")
+
+    pontas = tabuleiro.obter_pontas()
+
+    def _avaliar(peca: Peca) -> float:
+        score = 0.0
+        if len(pesos) > 0:
+            score += pesos[0] * peca.valor_total()
+        if len(pesos) > 1:
+            score += pesos[1] * (1 if peca.is_duplo() else 0)
+        if len(pesos) > 2:
+            encaixa_ambas = peca.encaixa(pontas[0]) and peca.encaixa(pontas[1])
+            score += pesos[2] * (1 if encaixa_ambas else 0)
+        return score
+
+    return max(jogadas, key=_avaliar)
+
+
+class GAJogador(Jogador):
+    """Jogador que utiliza pesos de uma heurística estilo GA."""
+
+    def __init__(self, nome: str, mao: Sequence[Peca], pesos: Sequence[float]):
+        super().__init__(nome, mao)
+        self.pesos = list(pesos)
+
+    def escolher_peca(self, tabuleiro, jogadores):
+        return escolher_peca_ga(self, tabuleiro, jogadores, self.pesos)

@@ -4,8 +4,7 @@ from typing import Any, Dict, Optional, Sequence
 from core.jogador import Jogador
 
 try:
-
-from core.jogador import MCTSJogador, CLIJogador, GAJogador
+    from core.jogador import MCTSJogador, CLIJogador, GAJogador
 except ImportError:  # Segurança caso subclasses sejam movidas
     MCTSJogador = CLIJogador = GAJogador = None
 

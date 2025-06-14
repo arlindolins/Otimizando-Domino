@@ -70,34 +70,65 @@ class CLIJogador(Jogador):
                 print("Entrada inválida.")
         return jogadas[escolha]
 
-    def pode_bater_com(self, peca, L, R):
-        """True se essa peça finalizaria a rodada."""
-        return len(self.mao) == 1 and (peca.encaixa(L) or peca.encaixa(R))
+def escolher_peca_ga(jogador: "Jogador", tabuleiro, jogadores, pesos: Sequence[float]):
+    """Escolhe a peça com base em uma heurística ponderada.
 
-    def tipo_batida_no_lance(self, peca, L, R):
+    Os pesos devem ser uma sequência numérica. Apenas três características são
+    consideradas:
+
+    - ``pesos[0]`` → soma dos valores da peça (pip sum)
+    - ``pesos[1]`` → bônus se a peça for dupla
+    - ``pesos[2]`` → bônus se a peça encaixa em ambas as pontas
+    """
+
+    jogadas = jogador.jogadas_validas(tabuleiro.obter_pontas())
+    if not jogadas:
+        raise ValueError("Jogador não possui jogadas válidas")
+
+    pontas = tabuleiro.obter_pontas()
+
+    def _avaliar(peca: Peca) -> float:
+        score = 0.0
+        if len(pesos) > 0:
+            score += pesos[0] * peca.valor_total()
+        if len(pesos) > 1:
+            score += pesos[1] * (1 if peca.is_duplo() else 0)
+        if len(pesos) > 2:
+            encaixa_ambas = peca.encaixa(pontas[0]) and peca.encaixa(pontas[1])
+            score += pesos[2] * (1 if encaixa_ambas else 0)
+        return score
+
+    return max(jogadas, key=_avaliar)
+
+
+class GAJogador(Jogador):
+    """Jogador que utiliza pesos de uma heurística estilo GA."""
+
+    def __init__(self, nome: str, mao: Sequence[Peca], pesos: Sequence[float]):
+        """Inicializa o jogador com uma lista de ``8`` pesos.
+
+        Os valores devem seguir a ordem definida em ``ga_domino.py``:
+
+        ``w0``‥``w7`` → ``opp_can``, ``partner_can``, ``opp_unknown``,
+        ``partner_unknown``, ``own_future``, ``pip_sum``, ``can_finish_type`` e
+        ``enemy_close_to_game``.
         """
-        4 = cruzada (duplo que fecha ambos)
-        3 = lá-e-lô (não-duplo que fecha ambos)
-        2 = carroça (duplo fecha um lado)
-        1 = simples
-        0 = ainda não bate
-        """
-        if not self.pode_bater_com(peca, L, R):
-            return 0
-        if peca.is_duplo():
-            return 4 if L == R else 2
-        return 3 if peca.encaixa(L) and peca.encaixa(R) else 1
+        if len(pesos) != 8:
+            raise ValueError("esperados 8 pesos para a estratégia GA")
 
-    # baseline simples p/ adversário
-    def estrategia_baseline(self, tabuleiro):
-        left, right = tabuleiro.obter_pontas()
-        for peca in self.mao:
-            if left is None:                 # primeira jogada
-                return (peca, None)
-            if peca.encaixa(left):
-                return (peca, "esquerda")
-            if peca.encaixa(right):
-                return (peca, "direita")
-        return (None, None)                  # passa
+        super().__init__(nome, mao)
+        self.pesos = list(pesos)
 
+        (
+            self.w0,
+            self.w1,
+            self.w2,
+            self.w3,
+            self.w4,
+            self.w5,
+            self.w6,
+            self.w7,
+        ) = self.pesos
 
+    def escolher_peca(self, tabuleiro, jogadores):
+        return escolher_peca_ga(self, tabuleiro, jogadores, self.pesos)

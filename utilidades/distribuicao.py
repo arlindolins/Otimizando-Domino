@@ -4,9 +4,10 @@ from typing import Any, Dict, Optional, Sequence
 from core.jogador import Jogador
 
 try:
-    from core.jogador import MCTSJogador, CLIJogador
+    from core.jogador import MCTSJogador, CLIJogador, GAJogador
 except ImportError:  # Segurança caso subclasses sejam movidas
-    MCTSJogador = CLIJogador = None
+    MCTSJogador = CLIJogador = GAJogador = None
+
 
 def _criar_jogador(nome: str, mao: Sequence[Peca], estrategia: Optional[Any]) -> Jogador:
     """Instancia um ``Jogador`` ou subclasse de acordo com ``estrategia``."""

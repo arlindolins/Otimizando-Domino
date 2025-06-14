@@ -5,7 +5,6 @@ import csv
 import os
 import uuid
 import time
-import random
 from typing import List, Dict, Optional
 from core.peca import Peca
 from core.jogador import Jogador
@@ -16,7 +15,7 @@ from regras.game_logic import (
     proximo_jogador_obj,
     determinar_tipo_batida,
     pontuacao_por_tipo,
-    determinar_vencedor_travamento
+    determinar_vencedor_travamento,
 )
 
 def simular_rodada(jogadores: List[Jogador], jogador_inicial_nome: Optional[str] = None):
@@ -54,7 +53,7 @@ def simular_rodada(jogadores: List[Jogador], jogador_inicial_nome: Optional[str]
                 # Primeira jogada: deve ser o maior duplo
                 peca_jogada = next(p for p in jogador_atual.mao if p.is_duplo() and p.lado1 == maior_duplo)
             else:
-                peca_jogada = jogadas[0]
+                peca_jogada = jogador_atual.escolher_peca(tabuleiro, jogadores)
 
             jogador_atual.remover_peca(peca_jogada)
             lado = tabuleiro.jogar(peca_jogada)
@@ -121,7 +120,25 @@ def simular_rodada(jogadores: List[Jogador], jogador_inicial_nome: Optional[str]
     }
 
 
-def simular_partida(pontos_para_vencer: int = 6, pontuacao_por_jogador: Optional[dict] = None):
+def simular_partida(
+    pontos_para_vencer: int = 6,
+    pontuacao_por_jogador: Optional[dict] = None,
+    estrategias: Optional[dict] = None,
+) -> dict:
+    """Simula uma partida completa.
+
+    Parameters
+    ----------
+    pontos_para_vencer: int
+        Pontuação alvo para que uma dupla vença a partida.
+    pontuacao_por_jogador: dict | None
+        Dicionário opcional para acumular a pontuação ao longo de múltiplas
+        partidas.
+    estrategias: dict | None
+        Mapeamento ``nome_jogador -> estratégia`` a ser utilizado na
+        distribuição das peças. Valores podem ser callables, objetos com
+        ``escolher_peca`` ou subclasses de :class:`Jogador`.
+    """
     # Define as duplas
     duplas = {
         "Dupla_1": Dupla("Dupla_1", ["J1", "J3"]),
@@ -135,7 +152,7 @@ def simular_partida(pontos_para_vencer: int = 6, pontuacao_por_jogador: Optional
 
     # Loop principal
     while max(dupla.pontuacao for dupla in duplas.values()) < pontos_para_vencer:
-        jogadores = distribuir_jogadores()  # retorna List[Jogador]
+        jogadores = distribuir_jogadores(estrategias)  # retorna List[Jogador]
         rodada = simular_rodada(jogadores, jogador_inicial_nome=jogador_inicial_nome)
 
         if "erro" in rodada:

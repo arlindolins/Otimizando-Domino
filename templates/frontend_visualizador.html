@@ -7,12 +7,87 @@
     body { font-family: sans-serif; padding: 20px; background: #f4f4f4; }
     .painel { margin: 20px 0; background: white; padding: 10px; border-radius: 6px; box-shadow: 0 1px 5px rgba(0,0,0,0.1); }
     .mao { margin: 5px 0; }
-    .peca { display: inline-block; margin: 2px; padding: 4px 8px; background: #ddd; border-radius: 4px; }
+    .peca { 
+      display: inline-flex;
+      margin: 2px;
+      background: #fff;
+      border: 2px solid #333;
+      border-radius: 4px;
+      padding: 2px;
+    }
+    .peca-vertical {
+      flex-direction: column;
+    }
+    .peca-horizontal {
+      flex-direction: row;
+    }
+    .metade {
+      width: 30px;
+      height: 30px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      padding: 3px;
+      gap: 1px;
+    }
+    .separador-vertical {
+      height: 2px;
+      background: #333;
+      margin: 0 5px;
+    }
+    .separador-horizontal {
+      width: 2px;
+      background: #333;
+      margin: 5px 0;
+    }
+    .pip {
+      width: 6px;
+      height: 6px;
+      background: #333;
+      border-radius: 50%;
+      margin: auto;
+    }
     .controle { margin-top: 10px; }
+    button {
+      padding: 8px 16px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      margin: 0 5px;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    .placar {
+      margin: 20px 0;
+      padding: 15px;
+      background: #e9ecef;
+      border-radius: 6px;
+    }
+    .historico-rodadas {
+      margin-top: 10px;
+      font-size: 0.9em;
+    }
+    .historico-item {
+      margin: 5px 0;
+      padding: 5px;
+      background: #f8f9fa;
+      border-radius: 4px;
+    }
   </style>
 </head>
 <body>
   <h1>Rodada de Dominó</h1>
+  <div class="placar">
+    <h3>Placar</h3>
+    <div id="placar-atual"></div>
+    <div class="historico-rodadas">
+      <h4>Histórico de Rodadas</h4>
+      <div id="historico"></div>
+    </div>
+  </div>
   <button onclick="carregarRodada()">Simular Nova Rodada</button>
   <div class="painel">
     <h3>Jogada Atual</h3>
@@ -21,7 +96,7 @@
     <div id="tabuleiro"></div>
     <h4>Mãos</h4>
     <div id="maos"></div>
-    <h4>Jogadas Disponíveis</h4>
+    <h4>Jogadas Disponíveis (Próximo Jogador)</h4>
     <div id="jogadas_disponiveis"></div>
     <div class="controle">
       <button onclick="voltar()">◀ Anterior</button>
@@ -33,19 +108,82 @@
 <script>
 let dados = [];
 let idx = 0;
+let placarGlobal = { "Dupla_1": 0, "Dupla_2": 0 };
+let historicoRodadas = [];
 
 function carregarRodada() {
   fetch('/simular')
     .then(res => res.json())
     .then(data => {
       dados = data.estados;
+      placarGlobal = data.placar;
+      historicoRodadas = data.historicoRodadas;
       idx = 0;
       mostrar();
+      atualizarPlacar();
     });
+}
+
+function atualizarPlacar() {
+  const placarHtml = `
+    <div>Dupla 1 (J1/J3): ${placarGlobal["Dupla_1"]} pontos</div>
+    <div>Dupla 2 (J2/J4): ${placarGlobal["Dupla_2"]} pontos</div>
+  `;
+  document.getElementById("placar-atual").innerHTML = placarHtml;
+
+  const historicoHtml = historicoRodadas.map((rodada, i) => `
+    <div class="historico-item">
+      Rodada ${i + 1}: ${rodada.dupla} venceu com ${rodada.tipoBatida} (${rodada.pontos} pontos)
+    </div>
+  `).join('');
+  document.getElementById("historico").innerHTML = historicoHtml;
+
+  if (placarGlobal["Dupla_1"] >= 7 || placarGlobal["Dupla_2"] >= 7) {
+    const vencedor = placarGlobal["Dupla_1"] >= 7 ? "Dupla 1" : "Dupla 2";
+    alert(`${vencedor} venceu a partida!`);
+  }
+}
+
+function criarPips(numero) {
+  const posicoes = {
+    0: [],
+    1: [4],
+    2: [2,6],
+    3: [2,4,6],
+    4: [0,2,6,8],
+    5: [0,2,4,6,8],
+    6: [0,2,3,5,6,8]
+  };
+  
+  let html = '<div class="metade">';
+  for (let i = 0; i < 9; i++) {
+    html += posicoes[numero].includes(i) ? '<div class="pip"></div>' : '<div></div>';
+  }
+  html += '</div>';
+  return html;
+}
+
+function formata(p, isBoard = false) {
+  if (!p) return '';
+  const isDuplo = p[0] === p[1];
+  const orientation = isBoard && !isDuplo ? 'horizontal' : 'vertical';
+  
+  return `<div class="peca peca-${orientation}">
+    ${criarPips(p[0])}
+    <div class="separador-${orientation}"></div>
+    ${criarPips(p[1])}
+  </div>`;
+}
+
+function formataTexto(p) {
+  return p ? `[${p[0]}|${p[1]}]` : '-';
 }
 
 function mostrar() {
   const estado = dados[idx];
+  const proximoJogador = getProximoJogador(estado.jogador);
+  const proximasJogadas = idx < dados.length - 1 ? dados[idx + 1].jogadas_disponiveis : [];
+  
   document.getElementById("info").innerHTML =
   `<strong>Jogada #${estado.ordem_jogada}</strong> |
    Jogador: ${estado.jogador} |
@@ -54,23 +192,22 @@ function mostrar() {
    Lado: ${estado.lado || '-'} |
    Tipo de Batida: ${estado.tipo_batida || '-'}`;
 
-  document.getElementById("tabuleiro").innerHTML = estado.tabuleiro.map(formata).join(' ');
+  document.getElementById("tabuleiro").innerHTML = estado.tabuleiro.map(p => formata(p, true)).join(' ');
 
   let htmlMaos = '';
   for (const j in estado.maos) {
-    htmlMaos += `<div class="mao"><strong>${j}:</strong> ${estado.maos[j].map(formata).join(' ')}</div>`;
+    htmlMaos += `<div class="mao"><strong>${j}:</strong> ${estado.maos[j].map(p => formata(p)).join(' ')}</div>`;
   }
   document.getElementById("maos").innerHTML = htmlMaos;
-  document.getElementById("jogadas_disponiveis").innerHTML =
-  estado.jogadas_disponiveis.map(formata).join(' ') || '<em>Nenhuma</em>';
+  
+  document.getElementById("jogadas_disponiveis").innerHTML = 
+    `<strong>Próximo jogador (${proximoJogador}):</strong> ${proximasJogadas.map(p => formata(p)).join(' ') || '<em>Nenhuma</em>'}`;
 }
 
-function formata(p) {
-  return p ? `<span class="peca">[${p[0]}|${p[1]}]</span>` : '';
-}
-
-function formataTexto(p) {
-  return p ? `[${p[0]}|${p[1]}]` : '-';
+function getProximoJogador(jogadorAtual) {
+  const ordem = ["J1", "J2", "J3", "J4"];
+  const idx = ordem.indexOf(jogadorAtual);
+  return ordem[(idx + 1) % 4];
 }
 
 function avancar() {

@@ -4,9 +4,7 @@ Este módulo expõe as funções ``run_match_v2`` e ``simulate_round_v2`` de
 forma compatível com o GA descrito em ``ga_domino.py``. Elas utilizam o
 motor definido em ``motor_de_jogo.py``.
 
-Atualmente o conjunto de pesos recebido não é usado, mas a assinatura é
-mantida para permitir futura integração de estratégias baseadas nesses
-valores.
+Os pesos recebidos são aplicados aos jogadores J1 e J3, permitindo avaliar heurísticas baseadas nesses valores.
 """
 from __future__ import annotations
 
@@ -15,14 +13,18 @@ from typing import List
 
 from motor_de_jogo import simular_rodada, simular_partida
 from utilidades.distribuicao import distribuir_jogadores
+from core.jogador import escolher_peca_ga
 
 
 def simulate_round_v2(_pesos: List[float]) -> int:
     """Executa uma única rodada e devolve o índice do jogador vencedor.
 
     Caso a rodada termine empatada (travamento), ``-1`` é retornado.
+    Os pesos são aplicados às jogadas de ``J1`` e ``J3``.
     """
-    jogadores = distribuir_jogadores()
+    estrategia_ga = lambda j, t, js: escolher_peca_ga(j, t, js, _pesos)
+    estrategias = {"J1": estrategia_ga, "J3": estrategia_ga}
+    jogadores = distribuir_jogadores(estrategias)
     resultado = simular_rodada(jogadores)
     vencedor = resultado["final"]["vencedor_rodada"]
     nomes = ["J1", "J2", "J3", "J4"]
@@ -30,10 +32,15 @@ def simulate_round_v2(_pesos: List[float]) -> int:
 
 
 def run_match_v2(_pesos: List[float], n_games: int = 120) -> int:
-    """Retorna quantas partidas foram vencidas pela ``Dupla_1``."""
+    """Retorna quantas partidas foram vencidas pela ``Dupla_1``.
+
+    Os pesos são aplicados às jogadas de ``J1`` e ``J3``.
+    """
+    estrategia_ga = lambda j, t, js: escolher_peca_ga(j, t, js, _pesos)
+    estrategias = {"J1": estrategia_ga, "J3": estrategia_ga}
     vitorias = 0
     for _ in range(n_games):
-        resultado = simular_partida()
+        resultado = simular_partida(estrategias=estrategias)
         if resultado["vencedor_partida"] == "Dupla_1":
             vitorias += 1
     return vitorias

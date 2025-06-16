@@ -2,10 +2,13 @@ from core.peca import Peca
 from typing import Callable, Any, List, Optional, Sequence
 
 class Jogador:
+    """Entidade básica de jogador."""
+
     def __init__(self, nome: str, mao: Sequence[Peca], estrategia: Optional[Any] = None):
         self.nome = nome
         self.mao: List[Peca] = list(mao)
         self.estrategia = estrategia
+        self._ausentes: set[int] = set()
 
     def remover_peca(self, peca: Peca):
         self.mao.remove(peca)
@@ -18,14 +21,42 @@ class Jogador:
             return self.mao.copy()
         return [peca for peca in self.mao if peca.encaixa(pontas[0]) or peca.encaixa(pontas[1])]
 
-    def escolher_peca(self, tabuleiro, jogadores):
-        """Retorna a peça escolhida para jogar de acordo com a estratégia."""
+    def registrar_passe(self, pontas: tuple[int, int]) -> None:
+        """Guarda valores que comprovadamente não estão na mão."""
+        self._ausentes.update({pontas[0], pontas[1]})
+
+    def valores_comprovadamente_ausentes(self) -> set[int]:
+        return set(self._ausentes)
+
+    def escolher_peca(
+        self,
+        tabuleiro,
+        jogadores,
+        *,
+        duplas=None,
+        passes_jog=None,
+        pontos_para_vencer: int | None = None,
+    ):
+        """Retorna a peça escolhida de acordo com a estratégia."""
         if self.estrategia is not None:
-            # Função ou objeto com método ``escolher_peca``
             if callable(self.estrategia):
-                return self.estrategia(self, tabuleiro, jogadores)
+                return self.estrategia(
+                    self,
+                    tabuleiro,
+                    jogadores,
+                    duplas=duplas,
+                    passes_jog=passes_jog,
+                    pontos_para_vencer=pontos_para_vencer,
+                )
             if hasattr(self.estrategia, "escolher_peca"):
-                return self.estrategia.escolher_peca(self, tabuleiro, jogadores)
+                return self.estrategia.escolher_peca(
+                    self,
+                    tabuleiro,
+                    jogadores,
+                    duplas=duplas,
+                    passes_jog=passes_jog,
+                    pontos_para_vencer=pontos_para_vencer,
+                )
             raise TypeError("Estratégia inválida")
 
         jogadas = self.jogadas_validas(tabuleiro.obter_pontas())
@@ -41,7 +72,7 @@ class MCTSJogador(Jogador):
         super().__init__(nome, mao)
         self.simulations = simulations
 
-    def escolher_peca(self, tabuleiro, jogadores):
+    def escolher_peca(self, tabuleiro, jogadores, **_):
         from mcts_engine import escolher_peca_mcts, SIMULACOES_PADRAO
 
         sims = self.simulations if self.simulations is not None else SIMULACOES_PADRAO
@@ -51,7 +82,7 @@ class MCTSJogador(Jogador):
 class CLIJogador(Jogador):
     """Jogador interativo via linha de comando."""
 
-    def escolher_peca(self, tabuleiro, jogadores):
+    def escolher_peca(self, tabuleiro, jogadores, **_):
         jogadas = self.jogadas_validas(tabuleiro.obter_pontas())
         if not jogadas:
             raise ValueError("Jogador não possui jogadas válidas")
@@ -130,5 +161,5 @@ class GAJogador(Jogador):
             self.w7,
         ) = self.pesos
 
-    def escolher_peca(self, tabuleiro, jogadores):
+    def escolher_peca(self, tabuleiro, jogadores, **_):
         return escolher_peca_ga(self, tabuleiro, jogadores, self.pesos)

@@ -1,10 +1,16 @@
 from core.peca import Peca
-from typing import Callable, Any, List, Optional, Sequence
+from typing import Callable, Any, List, Optional, Sequence, TYPE_CHECKING
+
+if TYPE_CHECKING:  # pragma: no cover - used for type hints only
+    from rl_engine import RLDominoStrategy
+
 
 class Jogador:
     """Entidade básica de jogador."""
 
-    def __init__(self, nome: str, mao: Sequence[Peca], estrategia: Optional[Any] = None):
+    def __init__(
+        self, nome: str, mao: Sequence[Peca], estrategia: Optional[Any] = None
+    ):
         self.nome = nome
         self.mao: List[Peca] = list(mao)
         self.estrategia = estrategia
@@ -14,12 +20,18 @@ class Jogador:
         self.mao.remove(peca)
 
     def possui_jogada(self, pontas: tuple[int, int]) -> bool:
-        return any(peca.encaixa(pontas[0]) or peca.encaixa(pontas[1]) for peca in self.mao)
+        return any(
+            peca.encaixa(pontas[0]) or peca.encaixa(pontas[1]) for peca in self.mao
+        )
 
     def jogadas_validas(self, pontas: tuple[int, int]) -> list[Peca]:
         if pontas[0] is None and pontas[1] is None:
             return self.mao.copy()
-        return [peca for peca in self.mao if peca.encaixa(pontas[0]) or peca.encaixa(pontas[1])]
+        return [
+            peca
+            for peca in self.mao
+            if peca.encaixa(pontas[0]) or peca.encaixa(pontas[1])
+        ]
 
     def registrar_passe(self, pontas: tuple[int, int]) -> None:
         """Guarda valores que comprovadamente não estão na mão."""
@@ -101,6 +113,7 @@ class CLIJogador(Jogador):
                 print("Entrada inválida.")
         return jogadas[escolha]
 
+
 def escolher_peca_ga(jogador: "Jogador", tabuleiro, jogadores, pesos: Sequence[float]):
     """Escolhe a peça com base em uma heurística ponderada.
 
@@ -163,3 +176,31 @@ class GAJogador(Jogador):
 
     def escolher_peca(self, tabuleiro, jogadores, **_):
         return escolher_peca_ga(self, tabuleiro, jogadores, self.pesos)
+
+
+class RLJogador(Jogador):
+    """Jogador que utiliza a estratégia de Q-learning persistente."""
+
+    def __init__(
+        self,
+        nome: str,
+        mao: Sequence[Peca],
+        *,
+        arquivo: str = "rl_qvalues.pkl",
+        alpha: float = 0.1,
+        epsilon: float = 0.1,
+    ):
+        from rl_engine import RLDominoStrategy
+
+        strategy = RLDominoStrategy(
+            alpha=alpha,
+            epsilon=epsilon,
+            persistence_file=arquivo,
+        )
+        super().__init__(nome, mao, estrategia=strategy)
+
+    def salvar(self) -> None:
+        """Persiste a tabela Q em disco."""
+        estrategia = getattr(self, "estrategia", None)
+        if hasattr(estrategia, "save"):
+            estrategia.save()

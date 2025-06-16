@@ -173,6 +173,12 @@ def simular_partida(
 
             pontuacao_por_jogador[jogador_vencedor] += pontos
 
+        # Permite que estratégias aprendizes atualizem seus parâmetros
+        for j in jogadores:
+            estrategia = getattr(j, "estrategia", None)
+            if hasattr(estrategia, "notificar_resultado"):
+                estrategia.notificar_resultado(j.nome, jogador_vencedor)
+
     vencedor_partida = max(duplas.items(), key=lambda item: item[1].pontuacao)[0]
 
     return {

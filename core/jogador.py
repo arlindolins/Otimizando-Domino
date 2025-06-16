@@ -8,9 +8,8 @@ if TYPE_CHECKING:  # pragma: no cover - used for type hints only
 class Jogador:
     """Entidade básica de jogador."""
 
-    def __init__(
-        self, nome: str, mao: Sequence[Peca], estrategia: Optional[Any] = None
-    ):
+
+    def __init__(self, nome: str, mao: Sequence[Peca], estrategia: Optional[Any] = None):
         self.nome = nome
         self.mao: List[Peca] = list(mao)
         self.estrategia = estrategia
@@ -27,11 +26,13 @@ class Jogador:
     def jogadas_validas(self, pontas: tuple[int, int]) -> list[Peca]:
         if pontas[0] is None and pontas[1] is None:
             return self.mao.copy()
+
         return [
             peca
             for peca in self.mao
             if peca.encaixa(pontas[0]) or peca.encaixa(pontas[1])
         ]
+
 
     def registrar_passe(self, pontas: tuple[int, int]) -> None:
         """Guarda valores que comprovadamente não estão na mão."""

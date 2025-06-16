@@ -15,6 +15,7 @@ core/__pycache__/peca.cpython-311.pyc
 core/__pycache__/tabuleiro.cpython-311.pyc
 regras/__pycache__/game_logic.cpython-311.pyc
 utilidades/__pycache__/distribuicao.cpython-311.pyc
+__pycache__/
 estrutura_etapa3_dominio.json
 motor_decisao.py
 regras_dominó_clássico_novo.json

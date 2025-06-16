@@ -18,11 +18,18 @@ from regras.game_logic import (
     determinar_vencedor_travamento,
 )
 
-def simular_rodada(jogadores: List[Jogador], jogador_inicial_nome: Optional[str] = None):
+def simular_rodada(
+    jogadores: List[Jogador],
+    jogador_inicial_nome: Optional[str] = None,
+    *,
+    duplas: dict[str, Dupla] | None = None,
+    pontos_para_vencer: int = 6,
+):
     tabuleiro = Tabuleiro()
     historico = []
     estados = []
     ordem_jogada = 1
+    passes_por_jogador = {j.nome: 0 for j in jogadores}
 
     # Identificar o jogador com o maior duplo (se não especificado)
     if jogador_inicial_nome is None:
@@ -39,7 +46,6 @@ def simular_rodada(jogadores: List[Jogador], jogador_inicial_nome: Optional[str]
         jogador_inicial = next(j for j in jogadores if j.nome == jogador_inicial_nome)
 
     jogador_atual = jogador_inicial
-    passes_consecutivos = 0
     motivo_fim = None
     tipo_batida = None
     vencedor_rodada = None
@@ -53,7 +59,13 @@ def simular_rodada(jogadores: List[Jogador], jogador_inicial_nome: Optional[str]
                 # Primeira jogada: deve ser o maior duplo
                 peca_jogada = next(p for p in jogador_atual.mao if p.is_duplo() and p.lado1 == maior_duplo)
             else:
-                peca_jogada = jogador_atual.escolher_peca(tabuleiro, jogadores)
+                peca_jogada = jogador_atual.escolher_peca(
+                    tabuleiro,
+                    jogadores,
+                    duplas=duplas or {},
+                    passes_jog=passes_por_jogador,
+                    pontos_para_vencer=pontos_para_vencer,
+                )
 
             jogador_atual.remover_peca(peca_jogada)
             lado = tabuleiro.jogar(peca_jogada)
@@ -67,7 +79,7 @@ def simular_rodada(jogadores: List[Jogador], jogador_inicial_nome: Optional[str]
                 "lado": lado
             })
 
-            passes_consecutivos = 0
+            tabuleiro.resetar_passes()
 
             if not jogador_atual.mao:
                 tipo_batida = determinar_tipo_batida(peca_jogada, tabuleiro.obter_pontas())
@@ -81,9 +93,11 @@ def simular_rodada(jogadores: List[Jogador], jogador_inicial_nome: Optional[str]
                 "jogador": jogador_atual.nome,
                 "tipo": "passe"
             })
-            passes_consecutivos += 1
+            passes_por_jogador[jogador_atual.nome] += 1
+            jogador_atual.registrar_passe(tabuleiro.obter_pontas())
+            tabuleiro.registrar_passe()
 
-            if passes_consecutivos == 4:
+            if tabuleiro.passes_consecutivos == 4:
                 vencedor_rodada, pontuacao_rodada = determinar_vencedor_travamento(jogadores)
                 motivo_fim = "travamento"
                 tipo_batida = "travamento"
@@ -153,7 +167,12 @@ def simular_partida(
     # Loop principal
     while max(dupla.pontuacao for dupla in duplas.values()) < pontos_para_vencer:
         jogadores = distribuir_jogadores(estrategias)  # retorna List[Jogador]
-        rodada = simular_rodada(jogadores, jogador_inicial_nome=jogador_inicial_nome)
+        rodada = simular_rodada(
+            jogadores,
+            jogador_inicial_nome=jogador_inicial_nome,
+            duplas=duplas,
+            pontos_para_vencer=pontos_para_vencer,
+        )
 
         if "erro" in rodada:
             continue  # refaz a rodada

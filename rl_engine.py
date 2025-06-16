@@ -222,7 +222,10 @@ class RLDominoStrategy:
 
         Se ``path`` for ``None`` utiliza o caminho definido na inicialização.
         """
+        path = r"C:\Users\ArlindoLins\OneDrive\Otimizando Dominó\q_value_learning"
+
         target = path or self._file
+        print(target)
         if target is None:
             raise ValueError("Um caminho para salvar deve ser fornecido")
         with open(target, "wb") as f:

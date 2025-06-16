@@ -1,31 +1,74 @@
 from core.peca import Peca
-from typing import Callable, Any, List, Optional, Sequence
+from typing import Callable, Any, List, Optional, Sequence, TYPE_CHECKING
+
+if TYPE_CHECKING:  # pragma: no cover - used for type hints only
+    from rl_engine import RLDominoStrategy
+
 
 class Jogador:
-    def __init__(self, nome: str, mao: Sequence[Peca], estrategia: Optional[Any] = None):
+    """Entidade básica de jogador."""
+
+    def __init__(
+        self, nome: str, mao: Sequence[Peca], estrategia: Optional[Any] = None
+    ):
         self.nome = nome
         self.mao: List[Peca] = list(mao)
         self.estrategia = estrategia
+        self._ausentes: set[int] = set()
 
     def remover_peca(self, peca: Peca):
         self.mao.remove(peca)
 
     def possui_jogada(self, pontas: tuple[int, int]) -> bool:
-        return any(peca.encaixa(pontas[0]) or peca.encaixa(pontas[1]) for peca in self.mao)
+        return any(
+            peca.encaixa(pontas[0]) or peca.encaixa(pontas[1]) for peca in self.mao
+        )
 
     def jogadas_validas(self, pontas: tuple[int, int]) -> list[Peca]:
         if pontas[0] is None and pontas[1] is None:
             return self.mao.copy()
-        return [peca for peca in self.mao if peca.encaixa(pontas[0]) or peca.encaixa(pontas[1])]
+        return [
+            peca
+            for peca in self.mao
+            if peca.encaixa(pontas[0]) or peca.encaixa(pontas[1])
+        ]
 
-    def escolher_peca(self, tabuleiro, jogadores):
-        """Retorna a peça escolhida para jogar de acordo com a estratégia."""
+    def registrar_passe(self, pontas: tuple[int, int]) -> None:
+        """Guarda valores que comprovadamente não estão na mão."""
+        self._ausentes.update({pontas[0], pontas[1]})
+
+    def valores_comprovadamente_ausentes(self) -> set[int]:
+        return set(self._ausentes)
+
+    def escolher_peca(
+        self,
+        tabuleiro,
+        jogadores,
+        *,
+        duplas=None,
+        passes_jog=None,
+        pontos_para_vencer: int | None = None,
+    ):
+        """Retorna a peça escolhida de acordo com a estratégia."""
         if self.estrategia is not None:
-            # Função ou objeto com método ``escolher_peca``
             if callable(self.estrategia):
-                return self.estrategia(self, tabuleiro, jogadores)
+                return self.estrategia(
+                    self,
+                    tabuleiro,
+                    jogadores,
+                    duplas=duplas,
+                    passes_jog=passes_jog,
+                    pontos_para_vencer=pontos_para_vencer,
+                )
             if hasattr(self.estrategia, "escolher_peca"):
-                return self.estrategia.escolher_peca(self, tabuleiro, jogadores)
+                return self.estrategia.escolher_peca(
+                    self,
+                    tabuleiro,
+                    jogadores,
+                    duplas=duplas,
+                    passes_jog=passes_jog,
+                    pontos_para_vencer=pontos_para_vencer,
+                )
             raise TypeError("Estratégia inválida")
 
         jogadas = self.jogadas_validas(tabuleiro.obter_pontas())
@@ -41,7 +84,7 @@ class MCTSJogador(Jogador):
         super().__init__(nome, mao)
         self.simulations = simulations
 
-    def escolher_peca(self, tabuleiro, jogadores):
+    def escolher_peca(self, tabuleiro, jogadores, **_):
         from mcts_engine import escolher_peca_mcts, SIMULACOES_PADRAO
 
         sims = self.simulations if self.simulations is not None else SIMULACOES_PADRAO
@@ -51,7 +94,7 @@ class MCTSJogador(Jogador):
 class CLIJogador(Jogador):
     """Jogador interativo via linha de comando."""
 
-    def escolher_peca(self, tabuleiro, jogadores):
+    def escolher_peca(self, tabuleiro, jogadores, **_):
         jogadas = self.jogadas_validas(tabuleiro.obter_pontas())
         if not jogadas:
             raise ValueError("Jogador não possui jogadas válidas")
@@ -69,6 +112,7 @@ class CLIJogador(Jogador):
             except ValueError:
                 print("Entrada inválida.")
         return jogadas[escolha]
+
 
 def escolher_peca_ga(jogador: "Jogador", tabuleiro, jogadores, pesos: Sequence[float]):
     """Escolhe a peça com base em uma heurística ponderada.
@@ -130,5 +174,33 @@ class GAJogador(Jogador):
             self.w7,
         ) = self.pesos
 
-    def escolher_peca(self, tabuleiro, jogadores):
+    def escolher_peca(self, tabuleiro, jogadores, **_):
         return escolher_peca_ga(self, tabuleiro, jogadores, self.pesos)
+
+
+class RLJogador(Jogador):
+    """Jogador que utiliza a estratégia de Q-learning persistente."""
+
+    def __init__(
+        self,
+        nome: str,
+        mao: Sequence[Peca],
+        *,
+        arquivo: str = "rl_qvalues.pkl",
+        alpha: float = 0.1,
+        epsilon: float = 0.1,
+    ):
+        from rl_engine import RLDominoStrategy
+
+        strategy = RLDominoStrategy(
+            alpha=alpha,
+            epsilon=epsilon,
+            persistence_file=arquivo,
+        )
+        super().__init__(nome, mao, estrategia=strategy)
+
+    def salvar(self) -> None:
+        """Persiste a tabela Q em disco."""
+        estrategia = getattr(self, "estrategia", None)
+        if hasattr(estrategia, "save"):
+            estrategia.save()

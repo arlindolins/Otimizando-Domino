@@ -59,39 +59,45 @@ class RLDominoStrategy:
         pontos_para_vencer: int,
     ) -> tuple[int, ...]:
         pontas = tabuleiro.obter_pontas()
-        p0 = pontas[0] if pontas[0] is not None else -1
-        p1 = pontas[1] if pontas[1] is not None else -1
+        left, right = pontas
+        p0 = left if left is not None else -1
+        p1 = right if right is not None else -1
         diff = p0 - p1 if p0 != -1 and p1 != -1 else -1
 
-        both_playable = int(
-            not tabuleiro.esta_vazio()
-            and any(
-                p.encaixa(pontas[0]) and p.encaixa(pontas[1])
-                for p in jogador.mao
-            )
-        )
+        empty = tabuleiro.esta_vazio()
 
         hist = [0] * 7
         n_duplos = 0
         max_duplo = -1
         soma_pips = 0
+        n_left = n_right = n_total = 0
+        both_playable = 0
         for p in jogador.mao:
-            hist[p.lado1] += 1
-            hist[p.lado2] += 1
-            if p.is_duplo():
+            l1, l2 = p.lado1, p.lado2
+            hist[l1] += 1
+            hist[l2] += 1
+            if l1 == l2:
                 n_duplos += 1
-                max_duplo = max(max_duplo, p.lado1)
-            soma_pips += p.valor_total()
+                if l1 > max_duplo:
+                    max_duplo = l1
+            soma_pips += l1 + l2
+            if not empty:
+                encaixa_left = l1 == left or l2 == left
+                encaixa_right = l1 == right or l2 == right
+                if encaixa_left:
+                    n_left += 1
+                if encaixa_right:
+                    n_right += 1
+                if encaixa_left or encaixa_right:
+                    n_total += 1
+                if encaixa_left and encaixa_right:
+                    both_playable = 1
+
         sum_bucket = self._bucket(soma_pips, [10, 20])
         len_mao = len(jogador.mao)
 
-        if tabuleiro.esta_vazio():
+        if empty:
             n_left = n_right = n_total = len_mao
-        else:
-            left, right = pontas
-            n_left = sum(p.encaixa(left) for p in jogador.mao)
-            n_right = sum(p.encaixa(right) for p in jogador.mao)
-            n_total = sum(p.encaixa(left) or p.encaixa(right) for p in jogador.mao)
 
         restantes = tabuleiro.restantes_por_valor()
         remaining_bucket = [self._bucket(r, [0, 1, 3]) for r in restantes]
@@ -133,7 +139,7 @@ class RLDominoStrategy:
 
         rem = restantes
         both_critical = int(
-            not tabuleiro.esta_vazio()
+            not empty
             and rem[pontas[0]] <= 1
             and rem[pontas[1]] <= 1
         )
@@ -196,9 +202,15 @@ class RLDominoStrategy:
         if random.random() < self.epsilon:
             escolha = random.choice(jogadas)
         else:
-            valores = [self.q[(estado, (p.lado1, p.lado2))] for p in jogadas]
-            max_v = max(valores)
-            melhores = [p for p, v in zip(jogadas, valores) if v == max_v]
+            melhores = []
+            max_v = float("-inf")
+            for p in jogadas:
+                v = self.q[(estado, (p.lado1, p.lado2))]
+                if v > max_v:
+                    max_v = v
+                    melhores = [p]
+                elif v == max_v:
+                    melhores.append(p)
             escolha = random.choice(melhores)
 
         self.prev_state = estado

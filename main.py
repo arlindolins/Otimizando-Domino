@@ -5,6 +5,15 @@
 from motor_de_jogo import simular_partida
 from core.jogador import escolher_peca_ga, MCTSJogador, RLJogador
 
+class SavingRLJogador(RLJogador):
+    """Versão que guarda instâncias para posterior salvamento."""
+
+    instances = []
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        SavingRLJogador.instances.append(self)
+
 # Pesos otimizados em 60 gerações
 w0 = 1.83
 w1 = 15.30
@@ -23,8 +32,8 @@ estrategias = {
     "J3": None,
     #"J1": lambda j, t, js: escolher_peca_ga(j, t, js, pesos),
     #"J3": lambda j, t, js: escolher_peca_ga(j, t, js, pesos),
-    "J2": RLJogador,
-    "J4": RLJogador,
+    "J2": SavingRLJogador,
+    "J4": SavingRLJogador,
 }
 
 n_games = 100
@@ -40,4 +49,8 @@ if __name__ == "__main__":
             vitoriasD1 += 1
         elif resultado["vencedor_partida"] == "Dupla_2":
             vitoriasD2 += 1
+        for jogador in SavingRLJogador.instances:
+            jogador.salvar()
+        SavingRLJogador.instances.clear()
     print("Pontuação final das duplas:", vitoriasD1, vitoriasD2)
+    

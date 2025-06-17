@@ -222,10 +222,8 @@ class RLDominoStrategy:
 
         Se ``path`` for ``None`` utiliza o caminho definido na inicialização.
         """
-        path = r"C:\Users\ArlindoLins\OneDrive\Otimizando Dominó\q_value_learning"
-
+        
         target = path or self._file
-        print(target)
         if target is None:
             raise ValueError("Um caminho para salvar deve ser fornecido")
         with open(target, "wb") as f:
@@ -234,6 +232,8 @@ class RLDominoStrategy:
 
     def _load(self, path: str) -> None:
         """Carrega valores previamente salvos, se disponíveis."""
+
+        path = r"C:\Users\ArlindoLins\Documents\Otimizando Dominó\rl_qvalues.pkl"
         if os.path.exists(path):
             with open(path, "rb") as f:
                 data = pickle.load(f)
@@ -243,5 +243,6 @@ class RLDominoStrategy:
 
     def load(self, path: str) -> None:
         """Sobrescreve o arquivo de persistência e carrega seus dados."""
+        path = r"C:\Users\ArlindoLins\Documents\Otimizando Dominó\rl_qvalues.pkl"
         self._load(path)
         self._file = path

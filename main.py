@@ -2,6 +2,8 @@
 """Ponto de entrada para execução simples do simulador."""
 
 
+from concurrent.futures import ProcessPoolExecutor
+
 from motor_de_jogo import simular_partida
 from core.jogador import escolher_peca_ga, MCTSJogador
 
@@ -18,25 +20,33 @@ w7 = 6.37
 # substitua pelos seus oito pesos
 pesos = [w0, w1, w2, w3, w4, w5, w6, w7]
 
+def estrategia_ga(jogador, tabuleiro, jogadores, *, pesos=pesos, **_):
+    """Wrapper para permitir uso com ``multiprocessing``."""
+    return escolher_peca_ga(jogador, tabuleiro, jogadores, pesos)
+
+
 estrategias = {
-    #"J1": None,
-    #"J3": None,
-    "J1": lambda j, t, js: escolher_peca_ga(j, t, js, pesos),
-    "J3": lambda j, t, js: escolher_peca_ga(j, t, js, pesos),
+    "J1": estrategia_ga,
+    "J3": estrategia_ga,
     "J2": MCTSJogador,
     "J4": MCTSJogador,
 }
 
 n_games = 100
 
-if __name__ == "__main__":
-    
-    vitoriasD1 = 0
-    vitoriasD2 = 0
-    for _ in range(n_games):
-        resultado = simular_partida(estrategias=estrategias)
-        if resultado["vencedor_partida"] == "Dupla_1":
-            vitoriasD1 += 1
-        elif resultado["vencedor_partida"] == "Dupla_2":
-            vitoriasD2 += 1
+
+def _run(_):
+    return simular_partida(estrategias=estrategias)["vencedor_partida"]
+
+
+def main() -> None:
+    with ProcessPoolExecutor() as executor:
+        resultados = list(executor.map(_run, range(n_games)))
+
+    vitoriasD1 = sum(r == "Dupla_1" for r in resultados)
+    vitoriasD2 = sum(r == "Dupla_2" for r in resultados)
     print("Pontuação final das duplas:", vitoriasD1, vitoriasD2)
+
+
+if __name__ == "__main__":
+    main()

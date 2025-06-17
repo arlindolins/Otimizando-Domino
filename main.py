@@ -35,11 +35,13 @@ estrategias = {
 n_games = 100
 
 
+
 def _run(_):
     return simular_partida(estrategias=estrategias)["vencedor_partida"]
 
 
 def main() -> None:
+
     with ProcessPoolExecutor() as executor:
         resultados = list(executor.map(_run, range(n_games)))
 

@@ -34,13 +34,19 @@ estrategias = {
 
 n_games = 100
 
-if __name__ == "__main__":
-    def _run(_):
-        return simular_partida(estrategias=estrategias)["vencedor_partida"]
 
+def _run(_):
+    return simular_partida(estrategias=estrategias)["vencedor_partida"]
+
+
+def main() -> None:
     with ProcessPoolExecutor() as executor:
         resultados = list(executor.map(_run, range(n_games)))
 
     vitoriasD1 = sum(r == "Dupla_1" for r in resultados)
     vitoriasD2 = sum(r == "Dupla_2" for r in resultados)
     print("Pontuação final das duplas:", vitoriasD1, vitoriasD2)
+
+
+if __name__ == "__main__":
+    main()

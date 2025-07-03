@@ -207,6 +207,63 @@ def simular_partida(
         "vencedor_partida": vencedor_partida
     }
 
+
+def salvar_resultado_em_csv(
+    id_partida: str,
+    resultado: dict,
+    writer_partidas: csv.writer,
+    writer_rodadas: csv.writer,
+    writer_jogadas: csv.writer,
+) -> None:
+    """Registra o resultado de ``simular_partida`` em arquivos CSV já abertos."""
+
+    writer_partidas.writerow(
+        [
+            id_partida,
+            resultado["vencedor_partida"],
+            resultado["pontuacao_por_jogador"]["J1"],
+            resultado["pontuacao_por_jogador"]["J2"],
+            resultado["pontuacao_por_jogador"]["J3"],
+            resultado["pontuacao_por_jogador"]["J4"],
+        ]
+    )
+
+    for id_rodada, rodada in enumerate(resultado["rodadas"]):
+        final = rodada["final"]
+        writer_rodadas.writerow(
+            [
+                id_partida,
+                id_rodada,
+                rodada["estados"][0]["jogador"],
+                final["tipo_batida"],
+                final["motivo_fim"],
+                final["vencedor_rodada"],
+                final["pontuacao_rodada"],
+                resultado["pontuacao_por_jogador"]["J1"],
+                resultado["pontuacao_por_jogador"]["J2"],
+                resultado["pontuacao_por_jogador"]["J3"],
+                resultado["pontuacao_por_jogador"]["J4"],
+            ]
+        )
+
+        for estado in rodada["estados"]:
+            if estado["tipo"] in ["jogada", "batida"] and estado["peca"]:
+                x, y = estado["peca"]
+            else:
+                x, y = "", ""
+            writer_jogadas.writerow(
+                [
+                    id_partida,
+                    id_rodada,
+                    estado["ordem_jogada"],
+                    estado["jogador"],
+                    estado["tipo"],
+                    x,
+                    y,
+                    estado.get("lado", ""),
+                ]
+            )
+
 pontuacao_jogadores = {"J1": 0, "J2": 0, "J3": 0, "J4": 0}
 
 # NOVA FUNÇÃO PARA SALVAR O HISTÓRICO COMPLETO DAS PARTIDAS
@@ -226,51 +283,17 @@ def simular_varias_partidas_em_csv(n=10, pasta_destino="historico_csv"):
     writer_rodadas.writerow(["id_partida", "id_rodada", "inicio_rodada", "tipo_batida", "motivo_fim", "vencedor_rodada", "pontuacao_rodada", "pontuacao_J1", "pontuacao_J2", "pontuacao_J3", "pontuacao_J4"])
     writer_jogadas.writerow(["id_partida", "id_rodada", "ordem_jogada", "jogador", "tipo", "peca_x", "peca_y", "lado"])
 
-    
+
     for _ in range(n):
         id_partida = str(uuid.uuid4())
         resultado = simular_partida(pontuacao_por_jogador=pontuacao_jogadores)
-
-        writer_partidas.writerow([
+        salvar_resultado_em_csv(
             id_partida,
-            resultado["vencedor_partida"],
-            resultado["pontuacao_por_jogador"]["J1"],
-            resultado["pontuacao_por_jogador"]["J2"],
-            resultado["pontuacao_por_jogador"]["J3"],
-            resultado["pontuacao_por_jogador"]["J4"]
-        ])
-
-        for id_rodada, rodada in enumerate(resultado["rodadas"]):
-            final = rodada["final"]
-            writer_rodadas.writerow([
-                id_partida,
-                id_rodada,
-                rodada["estados"][0]["jogador"],
-                final["tipo_batida"],
-                final["motivo_fim"],
-                final["vencedor_rodada"],
-                final["pontuacao_rodada"],
-                resultado["pontuacao_por_jogador"]["J1"],
-                resultado["pontuacao_por_jogador"]["J2"],
-                resultado["pontuacao_por_jogador"]["J3"],
-                resultado["pontuacao_por_jogador"]["J4"]
-            ])
-
-            for estado in rodada["estados"]:
-                if estado["tipo"] in ["jogada", "batida"] and estado["peca"]:
-                    x, y = estado["peca"]
-                else:
-                    x, y = "", ""
-                writer_jogadas.writerow([
-                    id_partida,
-                    id_rodada,
-                    estado["ordem_jogada"],
-                    estado["jogador"],
-                    estado["tipo"],
-                    x,
-                    y,
-                    estado.get("lado", "")
-                ])
+            resultado,
+            writer_partidas,
+            writer_rodadas,
+            writer_jogadas,
+        )
 
     partidas_csv.close()
     rodadas_csv.close()

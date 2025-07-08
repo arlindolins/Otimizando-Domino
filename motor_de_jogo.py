@@ -133,81 +133,6 @@ def simular_rodada(
         }
     }
 
-
-def simular_partida(
-    pontos_para_vencer: int = 6,
-    pontuacao_por_jogador: Optional[dict] = None,
-    estrategias: Optional[dict] = None,
-) -> dict:
-    """Simula uma partida completa.
-
-    Parameters
-    ----------
-    pontos_para_vencer: int
-        Pontuação alvo para que uma dupla vença a partida.
-    pontuacao_por_jogador: dict | None
-        Dicionário opcional para acumular a pontuação ao longo de múltiplas
-        partidas.
-    estrategias: dict | None
-        Mapeamento ``nome_jogador -> estratégia`` a ser utilizado na
-        distribuição das peças. Valores podem ser callables, objetos com
-        ``escolher_peca`` ou subclasses de :class:`Jogador`.
-    """
-    # Define as duplas
-    duplas = {
-        "Dupla_1": Dupla("Dupla_1", ["J1", "J3"]),
-        "Dupla_2": Dupla("Dupla_2", ["J2", "J4"])
-    }
-
-    pontuacao_por_jogador = {nome: 0 for dupla in duplas.values() for nome in dupla.jogadores}
-
-    rodadas = []
-    jogador_inicial_nome = None  # definido dinamicamente a cada rodada
-
-    # Loop principal
-    while max(dupla.pontuacao for dupla in duplas.values()) < pontos_para_vencer:
-        jogadores = distribuir_jogadores(estrategias)  # retorna List[Jogador]
-        rodada = simular_rodada(
-            jogadores,
-            jogador_inicial_nome=jogador_inicial_nome,
-            duplas=duplas,
-            pontos_para_vencer=pontos_para_vencer,
-        )
-
-        if "erro" in rodada:
-            continue  # refaz a rodada
-
-        rodadas.append(rodada)
-        final = rodada["final"]
-        jogador_vencedor = final["vencedor_rodada"]
-        pontos = final["pontuacao_rodada"]
-
-        if jogador_vencedor:
-            jogador_inicial_nome = jogador_vencedor  # define início da próxima rodada
-
-            if duplas["Dupla_1"].contem_jogador(jogador_vencedor):
-                duplas["Dupla_1"].adicionar_pontos(pontos)
-            else:
-                duplas["Dupla_2"].adicionar_pontos(pontos)
-
-            pontuacao_por_jogador[jogador_vencedor] += pontos
-
-        # Permite que estratégias aprendizes atualizem seus parâmetros
-        for j in jogadores:
-            estrategia = getattr(j, "estrategia", None)
-            if hasattr(estrategia, "notificar_resultado"):
-                estrategia.notificar_resultado(j.nome, jogador_vencedor)
-
-    vencedor_partida = max(duplas.items(), key=lambda item: item[1].pontuacao)[0]
-
-    return {
-        "duplas": {nome: dupla.pontuacao for nome, dupla in duplas.items()},
-        "pontuacao_por_jogador": pontuacao_por_jogador,
-        "rodadas": rodadas,
-        "vencedor_partida": vencedor_partida
-    }
-
-
 def salvar_resultado_em_csv(
     id_partida: str,
     resultado: dict,
@@ -264,16 +189,35 @@ def salvar_resultado_em_csv(
                 ]
             )
 
-pontuacao_jogadores = {"J1": 0, "J2": 0, "J3": 0, "J4": 0}
 
-# NOVA FUNÇÃO PARA SALVAR O HISTÓRICO COMPLETO DAS PARTIDAS
+def simular_partida(
+    writer_partidas: Optional[csv.writer] = None,
+    writer_rodadas: Optional[csv.writer] = None,
+    writer_jogadas: Optional[csv.writer] = None,
+    pontos_para_vencer: int = 6,
+    pontuacao_por_jogador: Optional[dict] = None,
+    estrategias: Optional[dict] = None,
+) -> dict:
+    """Simula uma partida completa.
 
-def simular_varias_partidas_em_csv(n=10, pasta_destino="historico_csv"):
+    Parameters
+    ----------
+    pontos_para_vencer: int
+        Pontuação alvo para que uma dupla vença a partida.
+    pontuacao_por_jogador: dict | None
+        Dicionário opcional para acumular a pontuação ao longo de múltiplas
+        partidas.
+    estrategias: dict | None
+        Mapeamento ``nome_jogador -> estratégia`` a ser utilizado na
+        distribuição das peças. Valores podem ser callables, objetos com
+        ``escolher_peca`` ou subclasses de :class:`Jogador`.
+    """
+    pasta_destino="historico_csv"
     os.makedirs(pasta_destino, exist_ok=True)
     
-    partidas_csv = open(os.path.join(pasta_destino, "partidas.csv"), mode="w", newline="")
-    rodadas_csv = open(os.path.join(pasta_destino, "rodadas.csv"), mode="w", newline="")
-    jogadas_csv = open(os.path.join(pasta_destino, "jogadas.csv"), mode="w", newline="")
+    partidas_csv = open(os.path.join(pasta_destino, "partidas.csv"), mode="a", newline="")
+    rodadas_csv = open(os.path.join(pasta_destino, "rodadas.csv"), mode="a", newline="")
+    jogadas_csv = open(os.path.join(pasta_destino, "jogadas.csv"), mode="a", newline="")
 
     writer_partidas = csv.writer(partidas_csv)
     writer_rodadas = csv.writer(rodadas_csv)
@@ -281,31 +225,80 @@ def simular_varias_partidas_em_csv(n=10, pasta_destino="historico_csv"):
 
     writer_partidas.writerow(["id_partida", "vencedor_partida", "pontuacao_J1", "pontuacao_J2", "pontuacao_J3", "pontuacao_J4"])
     writer_rodadas.writerow(["id_partida", "id_rodada", "inicio_rodada", "tipo_batida", "motivo_fim", "vencedor_rodada", "pontuacao_rodada", "pontuacao_J1", "pontuacao_J2", "pontuacao_J3", "pontuacao_J4"])
-    writer_jogadas.writerow(["id_partida", "id_rodada", "ordem_jogada", "jogador", "tipo", "peca_x", "peca_y", "lado"])
+    writer_jogadas.writerow(["id_partida", "id_rodada", "ordem_jogada", "jogador", "tipo", "peca_x", "peca_y", "lado"])  
 
+    # Define as duplas
+    duplas = {
+        "Dupla_1": Dupla("Dupla_1", ["J1", "J3"]),
+        "Dupla_2": Dupla("Dupla_2", ["J2", "J4"])
+    }
 
-    for _ in range(n):
-        id_partida = str(uuid.uuid4())
-        resultado = simular_partida(pontuacao_por_jogador=pontuacao_jogadores)
-        salvar_resultado_em_csv(
-            id_partida,
-            resultado,
-            writer_partidas,
-            writer_rodadas,
-            writer_jogadas,
+    pontuacao_por_jogador = {nome: 0 for dupla in duplas.values() for nome in dupla.jogadores}
+
+    rodadas = []
+    jogador_inicial_nome = None  # definido dinamicamente a cada rodada
+
+    # Loop principal
+    while max(dupla.pontuacao for dupla in duplas.values()) < pontos_para_vencer:
+        jogadores = distribuir_jogadores(estrategias)  # retorna List[Jogador]
+        rodada = simular_rodada(
+            jogadores,
+            jogador_inicial_nome=jogador_inicial_nome,
+            duplas=duplas,
+            pontos_para_vencer=pontos_para_vencer,
         )
+
+        if "erro" in rodada:
+            continue  # refaz a rodada
+
+        rodadas.append(rodada)
+        final = rodada["final"]
+        jogador_vencedor = final["vencedor_rodada"]
+        pontos = final["pontuacao_rodada"]
+
+        if jogador_vencedor:
+            jogador_inicial_nome = jogador_vencedor  # define início da próxima rodada
+
+            if duplas["Dupla_1"].contem_jogador(jogador_vencedor):
+                duplas["Dupla_1"].adicionar_pontos(pontos)
+            else:
+                duplas["Dupla_2"].adicionar_pontos(pontos)
+
+            pontuacao_por_jogador[jogador_vencedor] += pontos
+
+        # Permite que estratégias aprendizes atualizem seus parâmetros
+        for j in jogadores:
+            estrategia = getattr(j, "estrategia", None)
+            if hasattr(estrategia, "notificar_resultado"):
+                estrategia.notificar_resultado(j.nome, jogador_vencedor)
+
+    vencedor_partida = max(duplas.items(), key=lambda item: item[1].pontuacao)[0]
+
+    resultado = {
+       "vencedor_partida": vencedor_partida,
+       "pontuacao_por_jogador": pontuacao_por_jogador,
+       "rodadas": rodadas
+    }    
+
+    id_partida = str(uuid.uuid4())
+    salvar_resultado_em_csv(
+        id_partida,
+        resultado,
+        writer_partidas,
+        writer_rodadas,
+        writer_jogadas,
+    )
 
     partidas_csv.close()
     rodadas_csv.close()
     jogadas_csv.close()
 
-    
-    print("\nExportação concluída. Arquivos salvos em:", pasta_destino)
-    
 
-if __name__ == "__main__":
-    
-    inicio = time.time()
-    simular_varias_partidas_em_csv(n=10)
-    fim = time.time()
-    print(f"Tempo total de execução: {fim - inicio:.2f} segundos")
+    return {
+        "duplas": {nome: dupla.pontuacao for nome, dupla in duplas.items()},
+        "pontuacao_por_jogador": pontuacao_por_jogador,
+        "rodadas": rodadas,
+        "vencedor_partida": vencedor_partida
+    }
+
+pontuacao_jogadores = {"J1": 0, "J2": 0, "J3": 0, "J4": 0}

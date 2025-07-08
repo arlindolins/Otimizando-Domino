@@ -4,7 +4,7 @@
 
 from concurrent.futures import ProcessPoolExecutor
 
-from motor_de_jogo import simular_partida
+from motor_de_jogo import simular_partida, salvar_resultado_em_csv
 from core.jogador import escolher_peca_ga, MCTSJogador, RLJogador
 
 class SavingRLJogador(RLJogador):
@@ -35,13 +35,13 @@ def estrategia_ga(jogador, tabuleiro, jogadores, *, pesos=pesos, **_):
 
 
 estrategias = {
-    "J1": estrategia_ga,
-    "J3": estrategia_ga,
+    "J1": MCTSJogador,
+    "J3": MCTSJogador,
     "J2": MCTSJogador,
     "J4": MCTSJogador,
 }
 
-n_games = 100
+n_games = 10
 
 
 

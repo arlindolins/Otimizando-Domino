@@ -105,6 +105,51 @@
   </div>
 </body>
 
+<div class="painel">
+  <h3>Escolha as Estratégias de Cada Jogador</h3>
+  <div>
+    <label for="estrategia-j1">J1:</label>
+    <select id="estrategia-j1">
+      <option value="RL">Reforço (RL)</option>
+      <option value="GA">Genético (GA)</option>
+      <option value="MCTS">Monte Carlo (MCTS)</option>
+      <option value="Aleatório">Estratégia aleatória</option>
+      <option value="Controlar jogador">Controlar jogador</option>
+    </select>
+  </div>
+  <div>
+    <label for="estrategia-j2">J2:</label>
+    <select id="estrategia-j2">
+      <option value="RL">Reforço (RL)</option>
+      <option value="GA">Genético (GA)</option>
+      <option value="MCTS">Monte Carlo (MCTS)</option>
+      <option value="Aleatório">Estratégia aleatória</option>
+      <option value="Controlar jogador">Controlar jogador</option>
+    </select>
+  </div>
+  <div>
+    <label for="estrategia-j3">J3:</label>
+    <select id="estrategia-j3">
+      <option value="RL">Reforço (RL)</option>
+      <option value="GA">Genético (GA)</option>
+      <option value="MCTS">Monte Carlo (MCTS)</option>
+      <option value="Aleatório">Estratégia aleatória</option>
+      <option value="Controlar jogador">Controlar jogador</option>
+    </select>
+  </div>
+  <div>
+    <label for="estrategia-j4">J4:</label>
+    <select id="estrategia-j4">
+      <option value="RL">Reforço (RL)</option>
+      <option value="GA">Genético (GA)</option>
+      <option value="MCTS">Monte Carlo (MCTS)</option>
+      <option value="Aleatório">Estratégia aleatória</option>
+      <option value="Controlar jogador">Controlar jogador</option>
+    </select>
+  </div>
+</div>
+
+
 <script>
 let dados = [];
 let idx = 0;
@@ -112,7 +157,18 @@ let placarGlobal = { "Dupla_1": 0, "Dupla_2": 0 };
 let historicoRodadas = [];
 
 function carregarRodada() {
-  fetch('/simular')
+  const estrategias = {
+    J1: document.getElementById("estrategia-j1").value,
+    J2: document.getElementById("estrategia-j2").value,
+    J3: document.getElementById("estrategia-j3").value,
+    J4: document.getElementById("estrategia-j4").value
+  };
+
+  fetch('/simular', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(estrategias)
+  })
     .then(res => res.json())
     .then(data => {
       dados = data.estados;
@@ -123,6 +179,7 @@ function carregarRodada() {
       atualizarPlacar();
     });
 }
+
 
 function atualizarPlacar() {
   const placarHtml = `
